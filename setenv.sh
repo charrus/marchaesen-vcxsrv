@@ -24,6 +24,7 @@ else
         export MHMAKECONF=$(cygpath -w ${DIR})
         export PYTHON3=c:\\Python39\\python.exe
     fi
+    export CFLAGS="/FS"
 fi
 rm -f commands.sh
 export IS64=$1

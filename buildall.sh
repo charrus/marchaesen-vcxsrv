@@ -47,6 +47,8 @@ which MSBuild.exe > /dev/null 2>&1
 check-error 'Please install/set environment for visual studio 2022'
 which python.exe > /dev/null 2>&1
 check-error 'Make sure that python.exe is in the PATH. (e.g. cp /usr/bin/python2.7.exe /usr/bin/python.exe)'
+which jom.exe > /dev/null 2>&1
+check-error 'Please install jom (e.g. choco install -y jom)'
 
 # c:\perl should have a copy of strawberry perl portable edition
 which perl.exe > /dev/null 2>&1

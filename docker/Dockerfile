@@ -101,6 +101,13 @@ RUN choco install -y git \
         && git config --global core.autocrlf false \
         && git config --global --add safe.directory C:/src/.git
 
+# Install jom
+RUN choco install -y jom \
+        && refreshenv \
+        && rd /s /q %TEMP% \
+        && mkdir %TEMP% \
+        && del %ChocolateyInstall%\lib\jom\*.nupkg
+
 # Launch VS2022 developer (64bit) command prompt when started
 SHELL ["cmd", "/S", "/K"]
 ENTRYPOINT ""%ProgramFiles%\\Microsoft Visual Studio\\2022\\Community\\VC\\Auxiliary\\Build\\vcvars64.bat""
