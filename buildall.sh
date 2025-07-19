@@ -42,13 +42,12 @@ function check-error {
 
 which nasm.exe > /dev/null 2>&1
 check-error 'Please install nasm'
-
 which MSBuild.exe > /dev/null 2>&1
 check-error 'Please install/set environment for visual studio 2022'
 which python.exe > /dev/null 2>&1
-check-error 'Make sure that python.exe is in the PATH. (e.g. cp /usr/bin/python2.7.exe /usr/bin/python.exe)'
+check-error 'Please install python'
 which jom.exe > /dev/null 2>&1
-check-error 'Please install jom (e.g. choco install -y jom)'
+check-error 'Please install jom'
 
 # c:\perl should have a copy of strawberry perl portable edition
 which perl.exe > /dev/null 2>&1
