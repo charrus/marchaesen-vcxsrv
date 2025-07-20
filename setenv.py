@@ -47,7 +47,7 @@ os.remove("env_after.txt")
 
 wslenv="Path/l:PATH/l"
 for var,val in env_after.items():
-  if not var in env_before:
+  if var not in env_before:
     if "CYGWIN" in platform.system():
       print(f"export {var}='{val}'")
     else:
