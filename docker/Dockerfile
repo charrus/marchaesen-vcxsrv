@@ -79,6 +79,7 @@ RUN setx /M TZ "America/Los_Angeles"
 RUN choco install -y cygwin \
         && refreshenv \
         && c:\tools\cygwin\cygwinsetup.exe -q -v -P vim,bison,flex,gawk,gperf,gzip,nasm,sed,python27,python39-lxml -W -R c:\tools\cygwin -a x86_64 \
+        && if exist c:\tools\cygwin\bin\link.exe ren c:\tools\cygwin\bin\link.exe link_cygwin.exe \
         && rd /s /q %TEMP% \
         && mkdir %TEMP% \
         && del %ChocolateyInstall%\lib\cygwin\*.nupkg
