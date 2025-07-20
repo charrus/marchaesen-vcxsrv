@@ -83,7 +83,7 @@ RUN choco install -y cygwin \
         && rd /s /q %TEMP% \
         && mkdir %TEMP% \
         && del %ChocolateyInstall%\lib\cygwin\*.nupkg \
-        && bash.exe -c 'ln -s /cygdrive /mnt'
+        && C:\tools\cygwin\bin\bash.exe -c 'ln -s /cygdrive /mnt'
 
 # Install Python3
 RUN choco install -y python3 --version 3.9.13 \
