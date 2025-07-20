@@ -1,5 +1,5 @@
-import os,sys
-
+import os
+import platform
 import sys
 import subprocess
 
@@ -25,23 +25,20 @@ def escape(val):
   return '"'+val+'"'
 
 def escapepath(val):
-  tmp={}
-  paths=val.split(";")
+  paths=set(val.split(";"))
   newpath=[]
   for path in paths:
-    if not path in tmp:
-      tmp[path]=1
-      if os.path.exists("/cygdrive/c"):
-        path=path.replace("c:","/cygdrive/c")
-        path=path.replace("C:","/cygdrive/c")
-      else:
-        path=path.replace("c:","/mnt/c")
-        path=path.replace("C:","/mnt/c")
-      path=path.replace("\\","/")
-      path=path.replace(" ","\\ ")
-      path=path.replace("(","\\(")
-      path=path.replace(")","\\)")
-      newpath.append(path)
+    if "CYGWIN" in platform.system():
+      path=path.replace("c:","/cygdrive/c")
+      path=path.replace("C:","/cygdrive/c")
+    else:
+      path=path.replace("c:","/mnt/c")
+      path=path.replace("C:","/mnt/c")
+    path=path.replace("\\","/")
+    path=path.replace(" ","\\ ")
+    path=path.replace("(","\\(")
+    path=path.replace(")","\\)")
+    newpath.append(path)
   return ":".join(newpath) 
 
 env_before=readenv("env_before.txt")
@@ -52,7 +49,7 @@ os.remove("env_after.txt")
 wslenv="Path/l:PATH/l"
 for var,val in env_after.items():
   if not var in env_before:
-    print("export %s=%s"%(var,escapepath(val)))
+    print(f"export {var}={escapepath(val)}")
     wslenv+=":"+var+"/l"
   else:
     oldval=env_before[var]
@@ -60,10 +57,10 @@ for var,val in env_after.items():
       if var.lower()!="path":
         pass
         # currently only allow path to be different
-        #print var,"different"
-        #print oldval
-        #print val
+        #print(var,"different")
+        #print(oldval)
+        #print(val)
       else:
-        print("export PATH=%s"%(escapepath(val)))
+        print(f"export PATH={escapepath(val)}")
 print("export WSLENV="+wslenv)
 
