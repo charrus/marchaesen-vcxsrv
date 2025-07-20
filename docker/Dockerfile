@@ -83,7 +83,7 @@ RUN choco install -y cygwin \
         && rd /s /q %TEMP% \
         && mkdir %TEMP% \
         && del %ChocolateyInstall%\lib\cygwin\*.nupkg \
-        && C:\tools\cygwin\bin\bash.exe -c 'ln -s /cygdrive /mnt'
+        && C:\tools\cygwin\bin\bash.exe -lc 'ln -s /cygdrive /mnt'
 
 # Install Python3
 RUN choco install -y python3 --version 3.9.13 \
@@ -138,7 +138,7 @@ SHELL ["cmd", "/S", "/K"]
 # Once inside:
 #   git clone src vcx
 #   cygwin
-#   cd /cygdrive/c/vcx
+#   cd /mnt/c/vcx
 #   export SHELLOPTS
 #   set -o igncr
 #   ./buildall.sh 1 9 R
@@ -147,9 +147,9 @@ SHELL ["cmd", "/S", "/K"]
 # For debug builds best to ensure paths are the same, so:
 # 
 # Once inside:
-#   git clone src <path on the outside>, replacing d: etc with /cygdrive/d/...
+#   git clone src <path on the outside>, replacing d: etc with /mnt/d/...
 #   cygwin
-#   cd /cygdrive/<path on the outside>
+#   cd /mnt/<path on the outside>
 #   export SHELLOPTS
 #   set -o igncr
 #   ./buildall.sh 1 9 D
