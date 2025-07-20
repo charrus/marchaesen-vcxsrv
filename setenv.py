@@ -1,5 +1,5 @@
-import os,sys
-
+import os
+import platform
 import sys
 import subprocess
 
@@ -29,7 +29,7 @@ def escapepath(val):
   paths=val.split(";")
   newpath=[]
   for path in paths:
-    if not path in tmp:
+    if path not in tmp:
       tmp[path]=1
       path=path.replace("c:","/mnt/c")
       path=path.replace("C:","/mnt/c")
@@ -47,8 +47,11 @@ os.remove("env_after.txt")
 
 wslenv="Path/l:PATH/l"
 for var,val in env_after.items():
-  if not var in env_before:
-    print("export %s=%s"%(var,escapepath(val)))
+  if var not in env_before:
+    if "CYGWIN" in platform.system():
+      print(f"export {var}='{val}'")
+    else:
+      print(f"export {var}={escapepath(val)}")
     wslenv+=":"+var+"/l"
   else:
     oldval=env_before[var]
@@ -56,10 +59,10 @@ for var,val in env_after.items():
       if var.lower()!="path":
         pass
         # currently only allow path to be different
-        #print var,"different"
-        #print oldval
-        #print val
+        #print(var,"different")
+        #print(oldval)
+        #print(val)
       else:
-        print("export PATH=%s"%(escapepath(val)))
+        print(f"export PATH={escapepath(val)}")
 print("export WSLENV="+wslenv)
 

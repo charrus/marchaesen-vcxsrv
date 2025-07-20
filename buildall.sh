@@ -42,11 +42,12 @@ function check-error {
 
 which nasm.exe > /dev/null 2>&1
 check-error 'Please install nasm'
-
 which MSBuild.exe > /dev/null 2>&1
 check-error 'Please install/set environment for visual studio 2022'
 which python.exe > /dev/null 2>&1
-check-error 'Make sure that python.exe is in the PATH. (e.g. cp /usr/bin/python2.7.exe /usr/bin/python.exe)'
+check-error 'Please install python'
+which jom.exe > /dev/null 2>&1
+check-error 'Please install jom'
 
 # c:\perl should have a copy of strawberry perl portable edition
 which perl.exe > /dev/null 2>&1
@@ -69,7 +70,7 @@ if [[ "$IS64" == "1" ]]; then
 	fi
 else
 	if [[ "$BUILDRELEASE" == "1" ]] ; then
-		echo MSBuild.exe freetype/MSBuild/freetype.sln -t:Build -p:Configuration="Release" -p:Platform=Win32 -m:$2
+		echo MSBuild.exe freetype/MSBuild.sln -t:Build -p:Configuration="Release" -p:Platform=Win32 -m:$2
 		MSBuild.exe freetype/MSBuild.sln -t:Build -p:Configuration="Release" -p:Platform=Win32 -m:$2
 		check-error 'Error compiling freetype'
 	fi
@@ -150,13 +151,13 @@ if [[ "$IS64" == "1" ]]; then
   if [[ "$BUILDDEPS" == "1" ]]; then
 
   	if [[ "$BUILDRELEASE" == "1" ]]; then
-  		MSBuild.exe tools/mhmake/mhmakevc10.sln -t:Build -p:Configuration=Release -p:Platform=x64 -m:$2
+		MSBuild.exe tools/mhmake/mhmakevc10.sln -t:Build -p:Configuration=Release -p:Platform=x64 -m:$2
       wait
   		check-error 'Error compiling mhmake for release'
   	fi
 
   	if [[ "$BUILDDEBUG" == "1" ]]; then
-  		MSBuild.exe tools/mhmake/mhmakevc10.sln -t:Build -p:Configuration=Debug -p:Platform=x64 -m:$2
+		MSBuild.exe tools/mhmake/mhmakevc10.sln -t:Build -p:Configuration=Debug -p:Platform=x64 -m:$2                  
       wait
   		check-error 'Error compiling mhmake for debug'
   	fi
@@ -180,12 +181,12 @@ else
   if [[ "$BUILDDEPS" == "1" ]]; then
 
   	if [[ "$BUILDRELEASE" == "1" ]]; then
-  		MSBuild.exe tools/mhmake/mhmakevc10.sln -t:Build -p:Configuration=Release -p:Platform=Win32 -m:$2
+		MSBuild.exe tools/mhmake/mhmakevc10.sln -t:Build -p:Configuration=Release -p:Platform=Win32 -m:$2
       wait
   		check-error 'Error compiling mhmake for release'
   	fi
   	if [[ "$BUILDDEBUG" == "1" ]]; then
-  		MSBuild.exe tools/mhmake/mhmakevc10.sln -t:Build -p:Configuration=Debug -p:Platform=Win32 -m:$2
+		MSBuild.exe tools/mhmake/mhmakevc10.sln -t:Build -p:Configuration=Debug -p:Platform=Win32 -m:$2
       wait
   		check-error 'Error compiling mhmake for debug'
   	fi
