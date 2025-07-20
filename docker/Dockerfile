@@ -82,7 +82,8 @@ RUN choco install -y cygwin \
         && if exist c:\tools\cygwin\bin\link.exe ren c:\tools\cygwin\bin\link.exe link_cygwin.exe \
         && rd /s /q %TEMP% \
         && mkdir %TEMP% \
-        && del %ChocolateyInstall%\lib\cygwin\*.nupkg
+        && del %ChocolateyInstall%\lib\cygwin\*.nupkg \
+        && bash.exe -c 'ln -s /cygdrive /mnt'
 
 # Install Python3
 RUN choco install -y python3 --version 3.9.13 \
@@ -109,9 +110,24 @@ RUN choco install -y jom \
         && mkdir %TEMP% \
         && del %ChocolateyInstall%\lib\jom\*.nupkg
 
-# Launch VS2022 developer (64bit) command prompt when started
+# Install unzip
+RUN choco install -y unzip \
+        && refreshenv \
+        && rd /s /q %TEMP% \
+        && mkdir %TEMP% \
+        && del %ChocolateyInstall%\lib\unzip\*.nupkg
+
+# Install winflexbison (latest version in chocolatey is 2.5.24 which doesn't work for mhmake)
+RUN curl -SL --output win_flex_bison.zip https://github.com/lexxmark/winflexbison/releases/download/v2.5.25/win_flex_bison-2.5.25.zip \
+        && unzip -d c:\winflexbison win_flex_bison.zip \
+        && setx /m path "%path%;c:\winflexbison" \
+        && refreshenv \
+        && rd /s /q %TEMP% \
+        && mkdir %TEMP% \
+        && del win_flex_bison.zip
+
+# Launch command prompt (the developer environment is invoked during setenv.*)
 SHELL ["cmd", "/S", "/K"]
-ENTRYPOINT ""%ProgramFiles%\\Microsoft Visual Studio\\2022\\Community\\VC\\Auxiliary\\Build\\vcvars64.bat""
 
 
 # Ensure any local changes have been committed to git
@@ -125,5 +141,17 @@ ENTRYPOINT ""%ProgramFiles%\\Microsoft Visual Studio\\2022\\Community\\VC\\Auxil
 #   cd /cygdrive/c/vcx
 #   export SHELLOPTS
 #   set -o igncr
-#   ./buildall.sh 1 9 R   # 1 = 64bit (0 = 32bit), 9 = 9 parallell builds, R = Release (D = Debug)
+#   ./buildall.sh 1 9 R
 #   ./copyRelease.sh
+#
+# For debug builds best to ensure paths are the same, so:
+# 
+# Once inside:
+#   git clone src <path on the outside>, replacing d: etc with /cygdrive/d/...
+#   cygwin
+#   cd /cygdrive/<path on the outside>
+#   export SHELLOPTS
+#   set -o igncr
+#   ./buildall.sh 1 9 D
+#
+#   ./copyDebug.sh

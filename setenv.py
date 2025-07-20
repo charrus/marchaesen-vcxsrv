@@ -25,20 +25,19 @@ def escape(val):
   return '"'+val+'"'
 
 def escapepath(val):
-  paths=set(val.split(";"))
+  tmp={}
+  paths=val.split(";")
   newpath=[]
   for path in paths:
-    if "CYGWIN" in platform.system():
-      path=path.replace("c:","/cygdrive/c")
-      path=path.replace("C:","/cygdrive/c")
-    else:
+    if path not in tmp:
+      tmp[path]=1
       path=path.replace("c:","/mnt/c")
       path=path.replace("C:","/mnt/c")
-    path=path.replace("\\","/")
-    path=path.replace(" ","\\ ")
-    path=path.replace("(","\\(")
-    path=path.replace(")","\\)")
-    newpath.append(path)
+      path=path.replace("\\","/")
+      path=path.replace(" ","\\ ")
+      path=path.replace("(","\\(")
+      path=path.replace(")","\\)")
+      newpath.append(path)
   return ":".join(newpath) 
 
 env_before=readenv("env_before.txt")
@@ -49,7 +48,10 @@ os.remove("env_after.txt")
 wslenv="Path/l:PATH/l"
 for var,val in env_after.items():
   if not var in env_before:
-    print(f"export {var}={escapepath(val)}")
+    if "CYGWIN" in platform.system():
+      print(f"export {var}='{val}'")
+    else:
+      print(f"export {var}={escapepath(val)}")
     wslenv+=":"+var+"/l"
   else:
     oldval=env_before[var]
