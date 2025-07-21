@@ -169,7 +169,7 @@ if [[ "$IS64" == "1" ]]; then
 	fi
 
 	if [[ "$BUILDDEBUG" == "1" ]]; then
-		tools/mhmake/Release64/mhmake.exe -P$2 -C xorg-server MAKESERVER=1 DEBUG=1
+		tools/mhmake/Debug64/mhmake.exe -P$2 -C xorg-server MAKESERVER=1 DEBUG=1
 		check-error 'Error compiling vcxsrv for debug'
 	fi
 
