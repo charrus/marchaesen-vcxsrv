@@ -100,7 +100,7 @@ RUN choco install -y git \
         && rd /s /q %TEMP% \
         && mkdir %TEMP% \
         && del %ChocolateyInstall%\lib\git.install\*.nupkg \
-        && git config --global core.autocrlf false \
+        && git config --global core.autocrlf true \
         && git config --global --add safe.directory C:/src/.git
 
 # Install jom
