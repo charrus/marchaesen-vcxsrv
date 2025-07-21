@@ -118,6 +118,20 @@ RUN choco install -y jom \
         && mkdir %TEMP% \
         && del %ChocolateyInstall%\lib\jom\*.nupkg
 
+# Install meson
+RUN choco install -y meson \
+        && refreshenv \
+        && rd /s /q %TEMP% \
+        && mkdir %TEMP% \
+        && del %ChocolateyInstall%\lib\meson\*.nupkg
+
+# Install ninja
+RUN choco install -y ninja \
+        && refreshenv \
+        && rd /s /q %TEMP% \
+        && mkdir %TEMP% \
+        && del %ChocolateyInstall%\lib\ninja\*.nupkg
+
 # Install unzip
 RUN choco install -y unzip \
         && refreshenv \
