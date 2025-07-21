@@ -6,7 +6,7 @@ DESTDIR=$(MHMAKECONF)\xorg-server\xkbdata
 
 $(DESTDIR):
 	mkdir -p $(DESTDIR)
-	wsl ./build.sh
+	bash ./build.sh
 
 SUBDIRS = compat geometry keycodes symbols types
 

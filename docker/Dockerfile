@@ -99,6 +99,7 @@ RUN choco install -y python3 --version 3.9.13 \
         && mkdir %TEMP% \
         && pip install lxml \
         && pip install mako \
+        && pip install yaml \
         && del %ChocolateyInstall%\lib\python3\*.nupkg
 
 # Install git
