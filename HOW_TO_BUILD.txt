@@ -1,11 +1,14 @@
 Prerequisites:
 - Visual Studio 2022 Community Edition
 - Strawberry perl portable edition installed in c:\perl
-- Cygwin (with the following packages: bison, flex, gawk, gperf, gzip, nasm, sed, python27, python39, python39-lxml)
+- Cygwin (with the following packages: bison, flex, gawk, gperf, gzip, nasm, sed, python27, python39, python39-lxml, and without the following packages: gperf)
 - Python39 with lxml and mako
 - To build the installer: nsis
 - Jom for parallell nmake builds
 - Version 2.52.5 of winflexbison unzipped into c:\winflexbison
+- Gperf 
+
+
 
 or make it easy on yourself and use the new Docker-based build environment:
 

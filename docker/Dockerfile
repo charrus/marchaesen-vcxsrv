@@ -69,6 +69,13 @@ RUN choco install -y nsis \
         && mkdir %TEMP% \
         && del %ChocolateyInstall%\lib\nsis.install\*.nupkg
 
+# Install gperf
+RUN choco install -y gperf \
+        && refreshenv \
+        && rd /s /q %TEMP% \
+        && mkdir %TEMP% \
+        && del %ChocolateyInstall%\lib\gperf\*.nupkg
+
 # Disable creating junctions
 ENV CYGWIN=winsymlinks:lnk
 
@@ -78,7 +85,7 @@ RUN setx /M TZ "America/Los_Angeles"
 # Install Cygwin
 RUN choco install -y cygwin \
         && refreshenv \
-        && c:\tools\cygwin\cygwinsetup.exe -q -v -P vim,bison,flex,gawk,gperf,gzip,nasm,sed,python27,python39-lxml -W -R c:\tools\cygwin -a x86_64 \
+        && c:\tools\cygwin\cygwinsetup.exe -q -v -P vim,bison,flex,gawk,gperf,gzip,nasm,sed,python27,python39-lxml -x gperf -W -R c:\tools\cygwin -a x86_64 \
         && if exist c:\tools\cygwin\bin\link.exe ren c:\tools\cygwin\bin\link.exe link_cygwin.exe \
         && rd /s /q %TEMP% \
         && mkdir %TEMP% \
