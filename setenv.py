@@ -49,7 +49,7 @@ wslenv="Path/l:PATH/l"
 for var,val in env_after.items():
   if var not in env_before:
     if "CYGWIN" in platform.system():
-      print(f"export {var}='{val}'")
+      print(f"export {var}='{escape(val)}'")
     else:
       print(f"export {var}={escapepath(val)}")
     wslenv+=":"+var+"/l"
