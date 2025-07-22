@@ -96,7 +96,7 @@ COPY fstab igncr.sh /
 RUN choco install -y cygwin --install-arguments="INSTALLDIR=""C:\tools\cygwin"" /NoStartMenu /DesktopIcon:false" \
         && setx /m path "%path%;c:\tools\cygwin" \
         && refreshenv \
-        && cygwinsetup.exe -q -v -P vim,gawk,gzip,nasm,sed,python39,python39-lxml -W -R c:\tools\cygwin -a x86_64 \
+        && cygwinsetup.exe -q -v -P vim,gawk,gzip,nasm,sed -W -R c:\tools\cygwin -a x86_64 \
         && if exist c:\tools\cygwin\bin\link.exe ren c:\tools\cygwin\bin\link.exe link_cygwin.exe \
         && if exist %ChocolateyInstall%\bin\cygwin.exe ren %ChocolateyInstall%\bin\cygwin.exe choco_cygwin.exe \
         && dos2unix -n c:\fstab c:\tools\cygwin\etc\fstab \
@@ -108,6 +108,7 @@ RUN choco install -y cygwin --install-arguments="INSTALLDIR=""C:\tools\cygwin"" 
 
 # Install Python3
 RUN choco install -y python39 \
+        && copy c:\Python39\python.exe c:\Python39\python3.exe \
         && refreshenv \
         && rd /s /q %TEMP% \
         && mkdir %TEMP% \
