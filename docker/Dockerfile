@@ -107,7 +107,7 @@ RUN choco install -y cygwin --install-arguments="INSTALLDIR=""C:\tools\cygwin"" 
         && del %ChocolateyInstall%\lib\cygwin\*.nupkg
 
 # Install Python3
-RUN choco install -y python3 --version 3.9.13 \
+RUN choco install -y python39 \
         && refreshenv \
         && rd /s /q %TEMP% \
         && mkdir %TEMP% \
@@ -117,7 +117,9 @@ RUN choco install -y python3 --version 3.9.13 \
         && pip install StrEnum \
         && pip install pytest \
         && pip install python-gettext \
-        && del %ChocolateyInstall%\lib\python3\*.nupkg
+        && pip install meson \
+        && pip install ninja \
+        && del %ChocolateyInstall%\lib\python39\*.nupkg
 
 # Install git
 RUN choco install -y git \
@@ -127,20 +129,6 @@ RUN choco install -y git \
         && del %ChocolateyInstall%\lib\git.install\*.nupkg \
         && git config --global core.autocrlf true \
         && git config --global --add safe.directory C:/src/.git
-
-# Install meson
-RUN choco install -y meson \
-        && refreshenv \
-        && rd /s /q %TEMP% \
-        && mkdir %TEMP% \
-        && del %ChocolateyInstall%\lib\meson\*.nupkg
-
-# Install ninja
-RUN choco install -y ninja \
-        && refreshenv \
-        && rd /s /q %TEMP% \
-        && mkdir %TEMP% \
-        && del %ChocolateyInstall%\lib\ninja\*.nupkg
 
 # Install unzip
 RUN choco install -y unzip \
