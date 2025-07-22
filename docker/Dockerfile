@@ -100,6 +100,7 @@ RUN choco install -y python3 --version 3.9.13 \
         && pip install lxml \
         && pip install mako \
         && pip install pyyaml \
+        && pip install StrEnum \
         && del %ChocolateyInstall%\lib\python3\*.nupkg
 
 # Install git
@@ -110,13 +111,6 @@ RUN choco install -y git \
         && del %ChocolateyInstall%\lib\git.install\*.nupkg \
         && git config --global core.autocrlf true \
         && git config --global --add safe.directory C:/src/.git
-
-# Install jom
-RUN choco install -y jom \
-        && refreshenv \
-        && rd /s /q %TEMP% \
-        && mkdir %TEMP% \
-        && del %ChocolateyInstall%\lib\jom\*.nupkg
 
 # Install meson
 RUN choco install -y meson \
@@ -139,13 +133,16 @@ RUN choco install -y unzip \
         && mkdir %TEMP% \
         && del %ChocolateyInstall%\lib\unzip\*.nupkg
 
+# Install jom
+RUN curl -SL --output jom.zip http://download.qt.io/official_releases/jom/jom.zip \
+        && unzip -d jom jom.zip \
+        && setx /m path "%path%;c:\jom" \
+        && del jom.zip
+
 # Install winflexbison (latest version in chocolatey is 2.5.24 which doesn't work for mhmake)
 RUN curl -SL --output win_flex_bison.zip https://github.com/lexxmark/winflexbison/releases/download/v2.5.25/win_flex_bison-2.5.25.zip \
         && unzip -d c:\winflexbison win_flex_bison.zip \
         && setx /m path "%path%;c:\winflexbison" \
-        && refreshenv \
-        && rd /s /q %TEMP% \
-        && mkdir %TEMP% \
         && del win_flex_bison.zip
 
 # Launch command prompt (the developer environment is invoked during setenv.*)
