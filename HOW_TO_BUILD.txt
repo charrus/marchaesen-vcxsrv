@@ -7,8 +7,8 @@ Prerequisites:
 - Jom for parallell nmake builds
 - Version 2.52.5 of winflexbison unzipped into c:\winflexbison
 - Gperf 
-
-
+- Meson
+- Ninja
 
 or make it easy on yourself and use the new Docker-based build environment:
 

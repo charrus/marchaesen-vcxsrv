@@ -76,31 +76,51 @@ RUN choco install -y gperf \
         && mkdir %TEMP% \
         && del %ChocolateyInstall%\lib\gperf\*.nupkg
 
+# Install dos2unix
+RUN choco install -y dos2unix \
+        && refreshenv \
+        && rd /s /q %TEMP% \
+        && mkdir %TEMP% \
+        && del %ChocolateyInstall%\lib\dos2unix\*.nupkg
+
 # Disable creating junctions
 ENV CYGWIN=winsymlinks:lnk
 
 # Set the timezone to match container for cygwin
 RUN setx /M TZ "America/Los_Angeles"
 
+# Use /mnt rather than /cygdrive and treat DOS line endings same as UNIX.
+COPY fstab igncr.sh /
+
 # Install Cygwin
-RUN choco install -y cygwin \
+RUN choco install -y cygwin --install-arguments="INSTALLDIR=""C:\tools\cygwin"" /NoStartMenu /DesktopIcon:false" \
+        && setx /m path "%path%;c:\tools\cygwin" \
         && refreshenv \
-        && c:\tools\cygwin\cygwinsetup.exe -q -v -P vim,bison,flex,gawk,gperf,gzip,nasm,sed,python27,python39-lxml -x gperf -W -R c:\tools\cygwin -a x86_64 \
+        && cygwinsetup.exe -q -v -P vim,gawk,gzip,nasm,sed -W -R c:\tools\cygwin -a x86_64 \
         && if exist c:\tools\cygwin\bin\link.exe ren c:\tools\cygwin\bin\link.exe link_cygwin.exe \
+        && if exist %ChocolateyInstall%\bin\cygwin.exe ren %ChocolateyInstall%\bin\cygwin.exe choco_cygwin.exe \
+        && dos2unix -n c:\fstab c:\tools\cygwin\etc\fstab \
+        && dos2unix -n c:\igncr.sh c:\tools\cygwin\etc\profile.d\ingcr.sh \
+        && del c:\fstab c:\igncr.sh \
         && rd /s /q %TEMP% \
         && mkdir %TEMP% \
-        && del %ChocolateyInstall%\lib\cygwin\*.nupkg \
-        && C:\tools\cygwin\bin\bash.exe -lc 'ln -s /cygdrive /mnt'
+        && del %ChocolateyInstall%\lib\cygwin\*.nupkg
 
 # Install Python3
-RUN choco install -y python3 --version 3.9.13 \
+RUN choco install -y python39 \
+        && copy c:\Python39\python.exe c:\Python39\python3.exe \
         && refreshenv \
         && rd /s /q %TEMP% \
         && mkdir %TEMP% \
         && pip install lxml \
         && pip install mako \
         && pip install pyyaml \
-        && del %ChocolateyInstall%\lib\python3\*.nupkg
+        && pip install StrEnum \
+        && pip install pytest \
+        && pip install python-gettext \
+        && pip install meson \
+        && pip install ninja \
+        && del %ChocolateyInstall%\lib\python39\*.nupkg
 
 # Install git
 RUN choco install -y git \
@@ -111,27 +131,6 @@ RUN choco install -y git \
         && git config --global core.autocrlf true \
         && git config --global --add safe.directory C:/src/.git
 
-# Install jom
-RUN choco install -y jom \
-        && refreshenv \
-        && rd /s /q %TEMP% \
-        && mkdir %TEMP% \
-        && del %ChocolateyInstall%\lib\jom\*.nupkg
-
-# Install meson
-RUN choco install -y meson \
-        && refreshenv \
-        && rd /s /q %TEMP% \
-        && mkdir %TEMP% \
-        && del %ChocolateyInstall%\lib\meson\*.nupkg
-
-# Install ninja
-RUN choco install -y ninja \
-        && refreshenv \
-        && rd /s /q %TEMP% \
-        && mkdir %TEMP% \
-        && del %ChocolateyInstall%\lib\ninja\*.nupkg
-
 # Install unzip
 RUN choco install -y unzip \
         && refreshenv \
@@ -139,13 +138,16 @@ RUN choco install -y unzip \
         && mkdir %TEMP% \
         && del %ChocolateyInstall%\lib\unzip\*.nupkg
 
+# Install jom (latest version in chocolatey is from 2015)
+RUN curl -SL --output jom.zip http://download.qt.io/official_releases/jom/jom.zip \
+        && unzip -d jom jom.zip \
+        && setx /m path "%path%;c:\jom" \
+        && del jom.zip
+
 # Install winflexbison (latest version in chocolatey is 2.5.24 which doesn't work for mhmake)
 RUN curl -SL --output win_flex_bison.zip https://github.com/lexxmark/winflexbison/releases/download/v2.5.25/win_flex_bison-2.5.25.zip \
         && unzip -d c:\winflexbison win_flex_bison.zip \
         && setx /m path "%path%;c:\winflexbison" \
-        && refreshenv \
-        && rd /s /q %TEMP% \
-        && mkdir %TEMP% \
         && del win_flex_bison.zip
 
 # Launch command prompt (the developer environment is invoked during setenv.*)
@@ -155,15 +157,13 @@ SHELL ["cmd", "/S", "/K"]
 # Ensure any local changes have been committed to git
 #
 # Launch with: runDocker.cmd
-# Or docker run -m 2G -v:<VcXSrvGit>:c:\src -it vcxb
+# Or docker run -m 4G -v:<VcXSrvGit>:c:\src -it vcxb
 #
 # Once inside:
 #   git clone src vcx
 #   cygwin
 #   cd /mnt/c/vcx
-#   export SHELLOPTS
-#   set -o igncr
-#   ./buildall.sh 1 9 R
+#   ./buildall.sh 1 1 R (Currently openssl has issues with parallel builds)
 #   ./copyRelease.sh
 #
 # For debug builds best to ensure paths are the same, so:
@@ -171,9 +171,6 @@ SHELL ["cmd", "/S", "/K"]
 # Once inside:
 #   git clone src <path on the outside>, replacing d: etc with /mnt/d/...
 #   cygwin
-#   cd /mnt/<path on the outside>
-#   export SHELLOPTS
-#   set -o igncr
-#   ./buildall.sh 1 9 D
-#
+#   cd /mnt/c/vcx
+#   ./buildall.sh 1 1 D (Currently openssl has issues with parallel builds)
 #   ./copyDebug.sh

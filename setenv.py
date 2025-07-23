@@ -1,5 +1,4 @@
 import os
-import platform
 import sys
 import subprocess
 
@@ -48,8 +47,8 @@ os.remove("env_after.txt")
 wslenv="Path/l:PATH/l"
 for var,val in env_after.items():
   if var not in env_before:
-    if "CYGWIN" in platform.system():
-      print(f"export {var}='{val}'")
+    if os.environ.get("CYGWIN"):
+      print(f"export {var}={escape(val)}")
     else:
       print(f"export {var}={escapepath(val)}")
     wslenv+=":"+var+"/l"
