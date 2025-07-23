@@ -1,10 +1,12 @@
 #!/bin/bash
 
 if [[ "$1" == "1" ]] ; then
-    relese="Release64"
+    release="Release64"
 else
-    relese="Release"
+    release="Release"
 fi
+
+export release
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
@@ -12,6 +14,7 @@ rm -f commands.sh
 python setenv.py $1 > commands.sh
 chmod +x commands.sh
 source commands.sh
+
 if [ -z "${CYGWIN}" ]; then
     export PATH=/usr/local/bin:/usr/local/sbin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/usr/lib/wsl/lib:${DIR}/tools/mhmake/${release}:/mnt/c/nasm:$PATH:/mnt/c/gnuwin32/bin:/mnt/c/perl/perl/bin
     export MHMAKECONF=${DIR}

@@ -91,7 +91,7 @@ if [[ "$BUILDRELEASE" == "1" ]] ; then
 		fi
 		cd release64
 
-		perl.exe ../Configure VC-WIN64A --release
+		perl.exe ../Configure VC-WIN64A --release no-makedepend
 	else
 
 		if [[ ! -d "release32" ]]; then
@@ -99,7 +99,7 @@ if [[ "$BUILDRELEASE" == "1" ]] ; then
 		fi
 		cd release32
 
-		perl.exe ../Configure VC-WIN32 --release
+		perl.exe ../Configure VC-WIN32 --release no-makedepend
 	fi
 	check-error 'Error executing perl'
 
@@ -116,13 +116,13 @@ if [[ "$BUILDDEBUG" == "1" ]] ; then
 		  mkdir debug64
 		fi
 		cd debug64
-		perl.exe ../Configure VC-WIN64A --debug
+		perl.exe ../Configure VC-WIN64A --debug no-makedepend
 	else
 		if [[ ! -d "debug32" ]]; then
 		  mkdir debug32
 		fi
 		cd debug32
-		perl.exe ../Configure VC-WIN32 --debug
+		perl.exe ../Configure VC-WIN32 --debug no-makedepend
 	fi
 	check-error 'Error executing perl'
 
