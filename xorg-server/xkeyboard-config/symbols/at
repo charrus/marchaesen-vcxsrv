@@ -1,5 +1,3 @@
-// Keyboard layouts for Austria.
-
 default
 xkb_symbols "basic" {
 

@@ -1,6 +1,5 @@
-// Keyboard layout for Guinea.
-
-// Layout for N'Ko, by Denis Jacquerye.
+// Keyboard layout for N'Ko, by Denis Jacquerye.
+// See https://bugs.freedesktop.org/11702.
 default partial alphanumeric_keys
 xkb_symbols "basic" {
 

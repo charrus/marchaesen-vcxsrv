@@ -4,6 +4,9 @@ default xkb_keycodes "evdev" {
 	minimum = 8;
 	maximum = 255;
 
+        # Added for pc105 compatibility
+        <LSGT> = 94;
+
 	<TLDE> = 49;
 	<AE01> = 10;
 	<AE02> = 11;
@@ -33,6 +36,7 @@ default xkb_keycodes "evdev" {
 	<AD11> = 34;
 	<AD12> = 35;
 	<BKSL> = 51;
+	alias <AC12> = <BKSL>;
 	<RTRN> = 36;
 
 	<CAPS> = 66;
@@ -47,10 +51,8 @@ default xkb_keycodes "evdev" {
 	<AC09> = 46;
 	<AC10> = 47;
 	<AC11> = 48;
-	alias <AC12> = <BKSL>;
 
 	<LFSH> = 50;
-	<LSGT> = 94;
 	<AB01> = 52;
 	<AB02> = 53;
 	<AB03> = 54;
@@ -63,16 +65,16 @@ default xkb_keycodes "evdev" {
 	<AB10> = 61;
 	<RTSH> = 62;
 
-	<LCTL> = 37;
-	<LWIN> = 133;
 	<LALT> = 64;
+	<LCTL> = 37;
 	<SPCE> = 65;
+	<RCTL> = 105;
 	<RALT> = 108;
-	alias <ALGR> = <RALT>;
+	// Microsoft keyboard extra keys
+	<LWIN> = 133;
 	<RWIN> = 134;
 	<COMP> = 135;
 	alias <MENU> = <COMP>;
-	<RCTL> = 105;
 
 	<ESC> = 9;
 	<FK01> = 67;
@@ -89,8 +91,10 @@ default xkb_keycodes "evdev" {
 	<FK12> = 96;
 
 	<PRSC> = 107;
+	// <SYRQ> = 107;
 	<SCLK> = 78;
 	<PAUS> = 127;
+	// <BRK> = 419;
 
 	<INS> = 118;
 	<HOME> = 110;
@@ -142,15 +146,17 @@ default xkb_keycodes "evdev" {
 
 	// Keys that are generated on Japanese keyboards
 
-	alias <HZTG> = <TLDE>;	// Hankaku/Zenkaku toggle
+	//<HZTG> =  93;	// Hankaku/Zenkakau toggle - not actually used
+	alias <HZTG> = <TLDE>;
 	<HKTG> = 101;	// Hiragana/Katakana toggle
-	<AB11> =  97;	// backslash/underscore
+	<AB11> = 97;	// backslash/underscore
 	<HENK> = 100;	// Henkan
 	<MUHE> = 102;	// Muhenkan
 	<AE13> = 132;	// Yen
 	<KATA> =  98;	// Katakana
 	<HIRA> =  99;	// Hiragana
 	<JPCM> = 103;	// KPJPComma
+	//<RO>   =  97;	// Romaji
 
 	// Keys that are generated on Korean keyboards
 
@@ -176,10 +182,6 @@ default xkb_keycodes "evdev" {
 	<FIND> = 144;
 	<CUT>  = 145;
 	<HELP> = 146;
-	alias <OUTP> = <I235>;
-	alias <KITG> = <I236>;
-	alias <KIDN> = <I237>;
-	alias <KIUP> = <I238>;
 
 	// Extended keys that may be generated on "Internet" keyboards.
 	// evdev has standardize names for these.
@@ -190,16 +192,12 @@ default xkb_keycodes "evdev" {
 
 	// Fake keycodes for virtual keys
 	<LVL3> =   92;
-	<LVL5> =   203;
-	alias <MDSW> = <LVL5>;
+	<MDSW> =   203;
 	<ALT>  =   204;
 	<META> =   205;
 	<SUPR> =   206;
 	<HYPR> =   207;
 
-	// These indexes and names are hardcoded in various places:
-	// libxkbcommon, xf86-input-evdev and xf86-input-libinput drivers, etc.
-	// Do not change them without synchronizing!
 	indicator 1  = "Caps Lock";
 	indicator 2  = "Num Lock";
 	indicator 3  = "Scroll Lock";
@@ -211,6 +209,8 @@ default xkb_keycodes "evdev" {
 	indicator 9  = "Misc";
 	indicator 10 = "Mail";
 	indicator 11 = "Charging";
+
+	alias <ALGR> = <RALT>;
 
 	// For Brazilian ABNT2
 	alias <KPPT> = <I129>;

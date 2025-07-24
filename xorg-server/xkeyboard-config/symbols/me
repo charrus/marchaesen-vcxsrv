@@ -1,4 +1,7 @@
-// Keyboard layouts for Montenegro.
+// Montenegro keyboard mapping
+//
+// Initially, a copy of Serbian variants
+//
 
 default partial alphanumeric_keys
 xkb_symbols "basic" {

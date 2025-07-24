@@ -1,5 +1,3 @@
-// Keyboard layouts for Nepal.
-
 default partial alphanumeric_keys
 xkb_symbols "basic" {
 

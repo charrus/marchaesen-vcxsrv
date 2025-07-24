@@ -117,10 +117,18 @@ def generate_keycodes_file(template, codes):
                 )
                 continue
 
-            output.append(
-                f"\t<I{xkeycode}> = {xkeycode};\t\t// #define {name:23s} {code}\n"
-            )
+            # Special keys that need a comment
+            special_keys = {
+                211: "conflicts with AB11",
+            }
 
+            comment = special_keys.get(xkeycode, "")
+            if comment:
+                comment = f" {comment}"
+
+            output.append(
+                f"\t<I{xkeycode}> = {xkeycode};\t\t// #define {name:23s} {code}{comment}\n"
+            )
         output.append(f"\t// {section_footer}\n")
 
     return output

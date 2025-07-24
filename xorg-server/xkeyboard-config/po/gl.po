@@ -2573,11 +2573,11 @@ msgstr "Montenegrino (Latino, Unicode, QWERTY)"
 
 #: rules/base.xml:4415
 msgid "Montenegrin (Cyrillic, with guillemets)"
-msgstr "Montenegrino (cirílico, con guillemets)"
+msgstr "Montenegrino (cirílico, con guillemots)"
 
 #: rules/base.xml:4421
 msgid "Montenegrin (Latin, with guillemets)"
-msgstr "Montenegrino (Latino, con guillemets)"
+msgstr "Montenegrino (Latino, con guillemots)"
 
 #. Keyboard indicator for Macedonian layouts
 #: rules/base.xml:4430
@@ -2875,11 +2875,11 @@ msgstr "Serbio (Latino, Unicode, QWERTY)"
 
 #: rules/base.xml:4944
 msgid "Serbian (Cyrillic, with guillemets)"
-msgstr "Serbio (cirílico, con guillemets)"
+msgstr "Serbio (cirílico, con guillemots)"
 
 #: rules/base.xml:4950
 msgid "Serbian (Latin, with guillemets)"
-msgstr "Serbio (Latino, con guillemets)"
+msgstr "Serbio (Latino, con guillemots)"
 
 #: rules/base.xml:4956
 msgid "Pannonian Rusyn"
@@ -5960,6 +5960,9 @@ msgstr "Intercambiar corchetes"
 
 #~ msgid "Western"
 #~ msgstr "Occidental"
+
+#~ msgid "With guillemets"
+#~ msgstr "Con guillemots"
 
 #~ msgid "Z and ZHE swapped"
 #~ msgstr "Z y ZHE intercambiados"

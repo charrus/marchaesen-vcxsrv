@@ -101,14 +101,22 @@ xkb_symbols "evdev" {
     key <HELP>   {      [ Help                  ]       };
     key <LNFD>   {      [ Linefeed              ]       };
 
-// These are historical mappings that must not be removed.
-// xf86-input-libinput and xf86-input-evdev drivers
-// remap the respective evdev codes to F20-F24 since the
-// evdev codes are not routable in X.
-    key <FK20>   {      [ XF86AudioMicMute      ]       };
+// Commented out because HZTG has same keycode as TLDE
+//    key <HZTG>   {      [ Zenkaku_Hankaku       ]       };
+
+    key <HKTG>   {      [ Hiragana_Katakana     ]       };
+    key <HENK>   {      [ Henkan                ]       };
+    key <MUHE>   {      [ Muhenkan              ]       };
+    key <KATA>   {      [ Katakana              ]       };
+    key <HIRA>   {      [ Hiragana              ]       };
+
+    key <HNGL>   {      [ Hangul                ]       };
+    key <HJCV>   {      [ Hangul_Hanja          ]       };
     key <FK21>   {      [ XF86TouchpadToggle    ]       };
     key <FK22>   {      [ XF86TouchpadOn        ]       };
-    key <FK23>   {      [ XF86TouchpadOff, XF86Assistant ], type[Group1] = "PC_SHIFT_SUPER_LEVEL2" };
+    key <FK23>   {      [ XF86TouchpadOff       ]       };
+
+    key <FK20>   {      [ XF86AudioMicMute      ]       };
 
 //  key <I120>   {      [ ]       }; // KEY_MACRO
     key <I126>   {      [ plusminus             ]       };
@@ -154,6 +162,11 @@ xkb_symbols "evdev" {
     key <I186>   {      [ XF86ScrollDown        ]       };
     key <I187>   {      [ parenleft             ]       };
     key <I188>   {      [ parenright            ]       };
+    key <I192>   {      [ XF86LaunchA           ]       };
+    key <I193>   {      [ XF86LaunchC           ]       };
+    key <I194>   {      [ XF86LaunchD           ]       };
+    key <I195>   {      [ XF86LaunchE           ]       };
+    key <I196>   {      [ XF86LaunchF           ]       };
     key <I208>   {      [ XF86AudioPlay         ]       };
     key <I209>   {      [ XF86AudioPause        ]       };
     key <I210>   {      [ XF86Launch3           ]       };
@@ -958,6 +971,15 @@ partial alphanumeric_keys
 xkb_symbols "thinkpad60" {
     include "inet(media_nav_common)"
     key <I1F> { [ XF86VendorHome ] };
+};
+
+// IBM Space Saver
+partial alphanumeric_keys
+xkb_symbols "ibm_spacesaver" {
+    key <NMLK>  {
+        type="ONE_LEVEL",
+        symbols[Group1]= [ Num_Lock ]
+    };
 };
 
 
@@ -1774,6 +1796,16 @@ xkb_symbols "benqx" {
 };
 
 
+// Intel
+
+// Intel Classmate
+partial alphanumeric_keys
+xkb_symbols "classmate" {
+    key <I2E>   {       [ XF86AudioLowerVolume  ] };
+    key <I30>   {       [ XF86AudioRaiseVolume  ] };
+};
+
+
 // Unitek
 
 partial alphanumeric_keys
@@ -1845,21 +1877,3 @@ xkb_symbols "teck229" {
     include "inet(teck227)"
 };
 
-
-// Pinephone
-
-// Pinephone Keyboard
-partial alphanumeric_keys
-xkb_symbols "ppkb" {
-
-    key <AE01> {[  1,  exclam,       bar         ]};
-    key <AE02> {[  2,  at,           backslash   ]};
-    key <AE03> {[  3,  numbersign,   sterling    ]};
-    key <AE04> {[  4,  dollar,       EuroSign    ]};
-    key <AE05> {[  5,  percent,      asciitilde  ]};
-    key <AE06> {[  6,  asciicircum,  grave       ]};
-    key <AE07> {[  7,  ampersand,    minus       ]};
-    key <AE08> {[  8,  asterisk,     equal       ]};
-    key <AE09> {[  9,  parenleft,    underscore  ]};
-    key <AE10> {[  0,  parenright,   plus        ]};
-};

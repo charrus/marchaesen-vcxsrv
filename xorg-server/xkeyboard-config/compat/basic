@@ -5,7 +5,7 @@
 
 default xkb_compatibility "basic" {
 
-    virtual_modifiers  NumLock;
+    virtual_modifiers  NumLock,AltGr;
 
     interpret.repeat= False;
     setMods.clearLocks= True;
@@ -26,6 +26,8 @@ default xkb_compatibility "basic" {
     };
 
     interpret Mode_switch {
+	useModMapMods= level1;
+	virtualModifier= AltGr;
 	action= SetGroup(group=+1);
     };
 
@@ -33,9 +35,9 @@ default xkb_compatibility "basic" {
 	action= SetMods(modifiers=modMapMods);
     };
 
-    group 2 = Mod5;
-    group 3 = Mod5;
-    group 4 = Mod5;
+    group 2 = AltGr;
+    group 3 = AltGr;
+    group 4 = AltGr;
 
     include "ledcaps"
     include "lednum"

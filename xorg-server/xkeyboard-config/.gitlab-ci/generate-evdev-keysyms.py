@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 #
-# Usage: generate-evdev-keysyms.py --template .gitlab-ci/inet.in > symbols/inet
+# Usage: generate-evdev-keysyms.py .gitlab-ci/inet.in > symbols/inet
 #
 # Generate the symbols/inet file from the names defined in
 # linux/input-event-codes.h
@@ -10,10 +10,11 @@
 # generate this list.
 #
 
-import argparse
 import contextlib
+import argparse
 import re
 import sys
+
 
 # The marker to search for in the template file, replaced with our generated
 # codes.

@@ -4,7 +4,8 @@ endif
 
 DESTDIR=$(MHMAKECONF)\xorg-server\xkbdata\keycodes\sgi_vndr
 
-dist_keycodes_DATA = indigo indy iris
+dist_keycodes_DATA = \
+indigo indy iris
 
 DATA_FILES=$(dist_keycodes_DATA:%=$(DESTDIR)\%)
 

@@ -5,38 +5,33 @@
 # This file is formatted with Python Black
 
 import argparse
-import dataclasses
+import pathlib
 import os
-from pathlib import Path
-
 from pyparsing import (
-    And,
-    LineEnd,
+    Word,
     Literal,
+    LineEnd,
     OneOrMore,
-    Optional,
+    oneOf,
     Or,
-    ParseException,
+    And,
     QuotedString,
     Regex,
-    Word,
-    alphanums,
     cppStyleComment,
-    oneOf,
+    alphanums,
+    Optional,
+    ParseException,
 )
 
 xkb_basedir = None
 
 
-@dataclasses.dataclass
 class XkbSymbols:
-    file: Path  # Path to the file this section came from
-    name: str
-    includes: list[str] = dataclasses.field(default_factory=list)
-
-    @property
-    def layout(self) -> str:
-        return self.file.name  # XKb - filename is the layout name
+    def __init__(self, file, name):
+        self.file = file  # Path to the file this section came from
+        self.layout = file.name  # XKb - filename is the layout name
+        self.name = name
+        self.includes = []
 
     def __str__(self):
         return f"{self.layout}({self.name}): {self.includes}"
@@ -53,12 +48,12 @@ class XkbLoader:
 
     _instance = None
 
-    def __init__(self, xkb_basedir: Path):
+    def __init__(self, xkb_basedir):
         self.xkb_basedir = xkb_basedir
-        self.loaded: dict[Path, list[XkbSymbols]] = {}
+        self.loaded = {}
 
     @classmethod
-    def create(cls, xkb_basedir: Path):
+    def create(cls, xkb_basedir):
         assert cls._instance is None
         cls._instance = XkbLoader(xkb_basedir)
 
@@ -68,10 +63,10 @@ class XkbLoader:
         return cls._instance
 
     @classmethod
-    def load_symbols(cls, file: Path):
+    def load_symbols(cls, file):
         return cls.instance().load_symbols_file(file)
 
-    def load_symbols_file(self, file: Path) -> list[XkbSymbols]:
+    def load_symbols_file(self, file):
         file = self.xkb_basedir / file
         try:
             return self.loaded[file]
@@ -125,7 +120,7 @@ class XkbLoader:
             grammar = OneOrMore(section)
             grammar.ignore(cppStyleComment)
             try:
-                grammar.parseFile(fd)
+                result = grammar.parseFile(fd)
             except ParseException as e:
                 raise XkbLoader.XkbParserException(str(e))
 
@@ -138,9 +133,7 @@ def lit(string):
     return Literal(string).suppress()
 
 
-def print_section(
-    root: Path, s: XkbSymbols, filter_section: str | None = None, indent=0
-):
+def print_section(s, filter_section=None, indent=0):
     if filter_section and s.name != filter_section:
         return
 
@@ -153,81 +146,52 @@ def print_section(
     prefix = ""
     if indent > 0:
         prefix = " " * (indent - 2) + "|-> "
-    print(f"{prefix}{s.file.relative_to(root)}({s.name})")
+    print(f"{prefix}{s.layout}({s.name})")
     for include in s.includes:
         result = grammar.parseString(include)
         # Should really find the "default" section but for this script
         # hardcoding "basic" is good enough
         layout, variant = result.layout, result.variant or "basic"
 
+        # include "foo(bar)" means file "foo", section bar
+        includefile = xkb_basedir / layout
         include_sections = XkbLoader.load_symbols(layout)
         for include_section in include_sections:
-            print_section(
-                root, include_section, filter_section=variant, indent=indent + 4
-            )
+            print_section(include_section, filter_section=variant, indent=indent + 4)
 
 
-def list_sections(
-    root: Path, sections: list[XkbSymbols], filter_section: str | None = None
-):
+def list_sections(sections, filter_section=None, indent=0):
     for section in sections:
-        print_section(root, section, filter_section)
+        print_section(section, filter_section)
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        description="""
-            XKB symbol tree viewer.
-
-            This tool takes a symbols file and optionally a section in that
-            file and recursively walks the include directives in that section.
-            The resulting tree may be useful for checking which files
-            are affected when a single section is modified.
-            """
-    )
-    parser.add_argument(
-        "--xkb-root",
-        type=Path,
-        help="The XKB root directory",
-    )
+    parser = argparse.ArgumentParser(description="XKB symbol tree viewer")
     parser.add_argument(
         "file",
         metavar="file-or-directory",
-        type=Path,
+        type=pathlib.Path,
         help="The XKB symbols file or directory",
     )
     parser.add_argument(
         "section", type=str, default=None, nargs="?", help="The section (optional)"
     )
     ns = parser.parse_args()
-    if ns.xkb_root is not None:
-        ns.file = ns.xkb_root / "symbols" / ns.file
 
     if ns.file.is_dir():
-        if ns.xkb_root is None:
-            xkb_basedir: Path = ns.file.resolve()
-        else:
-            xkb_basedir = (ns.xkb_root / "symbols").resolve()
-        files: list[Path] = sorted(
-            Path(d) / f for d, _, fs in os.walk(ns.file.resolve()) for f in fs
-        )
+        xkb_basedir = ns.file.resolve()
+        files = sorted([f for f in ns.file.iterdir() if not f.is_dir()])
     else:
-        if ns.xkb_root is None:
-            # Note: this requires that the file given on the cmdline is not one of
-            # the sun_vdr/de or others inside a subdirectory. meh.
-            xkb_basedir = ns.file.parent.resolve()
-        else:
-            xkb_basedir = (ns.xkb_root / "symbols").resolve()
+        # Note: this requires that the file given on the cmdline is not one of
+        # the sun_vdr/de or others inside a subdirectory. meh.
+        xkb_basedir = ns.file.parent.resolve()
         files = [ns.file]
 
     XkbLoader.create(xkb_basedir)
 
-    try:
-        for file in files:
-            try:
-                sections = XkbLoader.load_symbols(file.resolve())
-                list_sections(xkb_basedir, sections, filter_section=ns.section)
-            except XkbLoader.XkbParserException:
-                pass
-    except KeyboardInterrupt:
-        pass
+    for file in files:
+        try:
+            sections = XkbLoader.load_symbols(file.resolve())
+            list_sections(sections, filter_section=ns.section)
+        except XkbLoader.XkbParserException:
+            pass

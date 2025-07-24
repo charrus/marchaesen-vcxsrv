@@ -1,5 +1,3 @@
-// Keyboard layouts for Slovakia.
-
 default partial alphanumeric_keys
 xkb_symbols "basic" {
 
@@ -25,7 +23,7 @@ xkb_symbols "basic" {
     key <AE12>  { [dead_acute, dead_caron,  dead_macron, dead_cedilla ] };
 
     key <AD01>  { [         q,          Q,    backslash,     NoSymbol ] };
-    key <AD02>  { [         w,          W,          bar,     NoSymbol ] };
+    key <AD02>  { [         w,          W,          bar,     Nosymbol ] };
     key <AD03>  { [         e,          E,     EuroSign,     NoSymbol ] };
     key <AD04>  { [         r,          R,     NoSymbol,     NoSymbol ] };
     key <AD05>  { [         t,          T,     NoSymbol,     NoSymbol ] };
@@ -54,7 +52,7 @@ xkb_symbols "basic" {
 
     key <LSGT>  { [ backslash,        bar,        slash,     NoSymbol ] };
     key <AB01>  { [         y,          Y,       degree,     NoSymbol ] };
-    key <AB02>  { [         x,          X,   numbersign,     NoSymbol ] };
+    key <AB02>  { [         x,          X,   numbersign,     Nosymbol ] };
     key <AB03>  { [         c,          C,    ampersand,     NoSymbol ] };
     key <AB04>  { [         v,          V,           at,     NoSymbol ] };
     key <AB05>  { [         b,          B,    braceleft,     NoSymbol ] };
@@ -110,10 +108,10 @@ xkb_symbols "acc" {
 
 xkb_symbols "bksl" {
 
-    // Put backslash on BKSL key (for when LSGT key is missing).
+    // Use <BKSL> instead of <LSGT> (useful for keyboards without <LSGT> key).
 
     include "sk(basic)"
-    name[Group1] = "Slovak (extra backslash)";
+    name[Group1] = "Slovak (extended backslash)";
 
     key <BKSL>  { [ backslash,        bar,        slash,     parenright ] };
     key <LSGT>  { [ backslash,  parenleft,        slash,     NoSymbol ] };
@@ -135,8 +133,10 @@ xkb_symbols "qwerty" {
 
 xkb_symbols "qwerty_bksl" {
 
+    // Use <BKSL> instead of <LSGT> (useful for keyboards without <LSGT> key).
+
     include "sk(qwerty)"
-    name[Group1] = "Slovak (QWERTY, extra backslash)";
+    name[Group1] = "Slovak (QWERTY, extended backslash)";
 
     key <BKSL>  { [ backslash,        bar,        slash,     parenright ] };
     key <LSGT>  { [ backslash,  parenleft,        slash,     NoSymbol ] };
