@@ -12,7 +12,7 @@ rm -f commands.sh
 python setenv.py $1 > commands.sh
 chmod +x commands.sh
 source commands.sh
-if [ "$(uname -o)" != "Cygwin" ]; then
+if [ -z "${CYGWIN}" ]; then
     export PATH=/usr/local/bin:/usr/local/sbin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/usr/lib/wsl/lib:${DIR}/tools/mhmake/${release}:/mnt/c/nasm:$PATH:/mnt/c/gnuwin32/bin:/mnt/c/perl/perl/bin
     export MHMAKECONF=${DIR}
     export PYTHON3=/mnt/c/Python39/python.exe
