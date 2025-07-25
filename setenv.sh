@@ -25,6 +25,6 @@ else
     fi
 fi
 rm -f commands.sh
-export CFLAGS="/FS"
+export CFLAGS="-FS"
 export IS64=$1
 
