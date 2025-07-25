@@ -6,7 +6,9 @@ DESTDIR=$(MHMAKECONF)\xorg-server\xkbdata
 
 $(DESTDIR):
 	mkdir -p $(DESTDIR)
-	bash.exe -x ./build.sh
+	meson setup -D=xorg-rules-copy=true --prefix=$(realpath ../xkbdata) builddir
+	meson compile -C builddir
+	meson install -C builddir
 
 SUBDIRS = compat geometry keycodes symbols types
 
