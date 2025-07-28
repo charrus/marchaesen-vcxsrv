@@ -36,7 +36,7 @@ else
     export PATH=${DIR}/tools/mhmake/${release}:$PATH:/mnt/c/Python39
     if [ -z "${MHMAKECONF}" ] ; then
         export MHMAKECONF=$(cygpath -w ${DIR})
-        export PYTHON3=python.exe
+        export PYTHON3=python3
     fi
 fi
 rm -f commands.sh
