@@ -13,6 +13,7 @@ export MHMAKEPATH="tools/mhmake"
 
 if [ "${BUILDDEBUG}" == "1" ] ; then
     MHMAKEPATH="${MHMAKEPATH}/Debug"
+fi
 if [ "${BUILDRELEASE}" == "1" ] ; then
     export MHMAKEPATH="tools/mhmake/Release"
 fi
