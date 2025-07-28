@@ -1,36 +1,37 @@
 #!/bin/bash
 
-if [[ "$1" == "1" ]] ; then
-source ./setenv.sh 1
-elif [[ "$1" == "0" ]] ; then
-source ./setenv.sh 0
+if [ "${1}" == "1" ]; then
+  export IS64=1
+elif [ "${1}" == "0" ]; then
+  export IS64=0
 else
   echo "Please pass 1 (64-bit compilation) or 0 (32-bit compilation) as first argument"
-  exit
+  exit 1
 fi
-if [[ "$2" == "" ]] ; then
+if [ "${2}" == "" ] ; then
   echo "Please pass number of parallel builds as second argument"
-  exit
+  exit 1
 fi
-if [[ "$3" == "" ]] ; then
+if [ "${3}" == "" ] ; then
   echo "Please pass build type as third argument.  D for DEBUG, R for RELEASE, A for ALL"
-  exit
+  exit 1
 fi
-if [[ "$3" == "A" ]] ; then
-BUILDRELEASE=1
-BUILDDEBUG=1
+if [ "${3}" == "A" ] ; then
+  export BUILDRELEASE=1
+  export BUILDDEBUG=1
 fi
-if [[ "$3" == "R" ]] ; then
-BUILDRELEASE=1
-BUILDDEBUG=0
+if [ "${3}" == "R" ] ; then
+  export BUILDRELEASE=1
+  export BUILDDEBUG=0
 fi
-if [[ "$3" == "D" ]] ; then
-BUILDRELEASE=0
-BUILDDEBUG=1
+if [ "${3}" == "D" ] ; then
+  export BUILDRELEASE=0
+  export BUILDDEBUG=1
 fi
-BUILDDEPS=1
-if [[ "$4" == "N" ]] ; then
-BUILDDEPS=0
+source ./setenv.sh ${IS64}
+export BUILDDEPS=1
+if [ "${4}" == "N" ] ; then
+  export BUILDDEPS=0
 fi
 function check-error {
     errorcode=$?
@@ -164,12 +165,12 @@ if [[ "$IS64" == "1" ]]; then
   fi
 
 	if [[ "$BUILDRELEASE" == "1" ]]; then
-		tools/mhmake/Release64/mhmake.exe -P$2 -C xorg-server MAKESERVER=1
+		${MHMAKEPATH}/mhmake.exe -P$2 -C xorg-server MAKESERVER=1
 		check-error 'Error compiling vcxsrv for release'
 	fi
 
 	if [[ "$BUILDDEBUG" == "1" ]]; then
-		tools/mhmake/Debug64/mhmake.exe -P$2 -C xorg-server MAKESERVER=1 DEBUG=1
+		${MHMAKEPATH}/mhmake.exe -P$2 -C xorg-server MAKESERVER=1 DEBUG=1
 		check-error 'Error compiling vcxsrv for debug'
 	fi
 
@@ -192,11 +193,11 @@ else
   	fi
 
   	if [[ "$BUILDRELEASE" == "1" ]]; then
-  		tools/mhmake/Release/mhmake.exe -P$2 -C xorg-server MAKESERVER=1
+		${MHMAKEPATH}/mhmake.exe -P$2 -C xorg-server MAKESERVER=1
   		check-error 'Error compiling vcxsrv for release'
   	fi
   	if [[ "$BUILDDEBUG" == "1" ]]; then
-  		tools/mhmake/Release/mhmake.exe -P$2 -C xorg-server MAKESERVER=1 DEBUG=1
+		${MHMAKEPATH}/mhmake.exe -P$2 -C xorg-server MAKESERVER=1 DEBUG=1
   		check-error 'Error compiling vcxsrv for debug'
   	fi
 
