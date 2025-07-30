@@ -4,6 +4,10 @@ endif
 
 DESTDIR=$(MHMAKECONF)\xorg-server\xkbdata
 
+$(DESTDIR):
+	mkdir -p $(DESTDIR)
+	bash.exe ./build.sh
+
 SUBDIRS = compat geometry keycodes symbols types
 
 load_makefile $(SUBDIRS:%=%\makefile MAKESERVER=0 DEBUG=$(DEBUG);)
