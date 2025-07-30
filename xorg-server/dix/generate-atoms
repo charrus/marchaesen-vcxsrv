@@ -13,7 +13,7 @@ do_line() {
     echo "        AtomError();"
 }
 
-cat.exe > "$OUTPUT" << __END__
+cat > "$OUTPUT" << __END__
 /* THIS IS A GENERATED FILE
  *
  * Do not change!  Changing this file implies a protocol change!
@@ -35,6 +35,6 @@ MakePredeclaredAtoms(void)
 {
 __END__
 
-( grep.exe '@' < "$INPUT" ) | ( while read l ; do do_line $l ; done ) >> "$OUTPUT"
+( grep '@' < "$INPUT" ) | ( while read l ; do do_line $l ; done ) >> "$OUTPUT"
 
 echo "}" >> "$OUTPUT"
