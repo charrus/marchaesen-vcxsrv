@@ -31,13 +31,14 @@ if [ -z "${CYGWIN}" ]; then
     # WSL build.
     export PATH=/usr/local/bin:/usr/local/sbin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/usr/lib/wsl/lib:${DIR}/${MHMAKEPATH}:/mnt/c/nasm:$PATH:/mnt/c/gnuwin32/bin:/mnt/c/perl/perl/bin
     export MHMAKECONF=${DIR}
+    export PYTHON3=/mnt/c/Python39/python.exe
     export WSLENV="${WSLENV}:MHMAKECONF/l:PYTHON3/l:IS64/l:CFLAGS/l"
 else
     # Docker cygwin build - $PATH is setup in Dockerfile so no need to set it here.
     export PATH=${DIR}/${MHMAKEPATH}:$PATH
     export MHMAKECONF=$(cygpath -w ${DIR})
+    export PYTHON3=python3
 fi
-export PYTHON3=/mnt/c/Python39/python.exe
 rm -f commands.sh
 export CFLAGS="-FS"
 
