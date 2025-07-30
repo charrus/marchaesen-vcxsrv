@@ -230,14 +230,14 @@ if get_option('xorg-rules-symlinks')
                       pointing_to: 'base' + suffix,
                       install_dir: dir_xkb_rules)
     else
-      meson.add_install_script('bash', '-c',
+      meson.add_install_script('sh', '-c',
         'ln -s base@0@ $DESTDIR@1@/xorg@0@'.format(suffix, dir_xkb_rules))
     endif
   endforeach
 endif
 if get_option('xorg-rules-copy')
   foreach suffix: ['', '.lst', '.xml']
-    meson.add_install_script('bash', '-c', 'cp ${MESON_INSTALL_PREFIX}/@1@/base@0@ ${MESON_INSTALL_PREFIX}/@1@/xorg@0@'.format(suffix, dir_xkb_rules))
+    meson.add_install_script('sh', '-c', 'cp ${MESON_INSTALL_PREFIX}/@1@/base@0@ ${MESON_INSTALL_PREFIX}/@1@/xorg@0@'.format(suffix, dir_xkb_rules))
   endforeach
 endif
 # Copy the DTD to the build directory, the man page generation expects it in
