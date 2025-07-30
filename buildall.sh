@@ -1,9 +1,9 @@
 #!/bin/bash
 
 if [ "${1}" == "1" ]; then
-    export IS64=1
+    IS64=1
 elif [ "${1}" == "0" ]; then
-    export IS64=0
+    IS64=0
 else
     echo "Please pass 1 (64-bit compilation) or 0 (32-bit compilation) as first argument"
     exit 1
@@ -17,23 +17,23 @@ if [ "${3}" == "" ] ; then
     exit 1
 fi
 if [ "${3}" == "A" ] ; then
-    export BUILDRELEASE=1
-    export BUILDDEBUG=1
+    BUILDRELEASE=1
+    BUILDDEBUG=1
 fi
 if [ "${3}" == "R" ] ; then
-    export BUILDRELEASE=1
-    export BUILDDEBUG=0
+    BUILDRELEASE=1
+    BUILDDEBUG=0
 fi
 if [ "${3}" == "D" ] ; then
-    export BUILDRELEASE=0
-    export BUILDDEBUG=1
+    BUILDRELEASE=0
+    BUILDDEBUG=1
 fi
 
 source ./setenv.sh ${IS64}
 
-export BUILDDEPS=1
+BUILDDEPS=1
 if [ "${4}" == "N" ] ; then
-    export BUILDDEPS=0
+    BUILDDEPS=0
 fi
 
 function check-error {
