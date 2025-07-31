@@ -5,7 +5,7 @@ project('xkeyboard-config',
 
 xkc_version = meson.project_version().split('.')
 xkc_version_major = xkc_version[0]
-# dir_data         = join_paths(get_option('prefix'), get_option('datadir'))
+dir_data         = join_paths(get_option('prefix'), get_option('datadir'))
 # dir_xkb_base     = join_paths(dir_data, f'xkeyboard-config-@xkc_version_major@')
 dir_xkb_base    = ''
 dir_xkb_base_x11 = join_paths(dir_data, 'X11', 'xkb')
