@@ -57,6 +57,10 @@ check-error 'Please install jom'
 which perl.exe > /dev/null 2>&1
 check-error 'Please install strawberry perl portable edition into c:\perl'
 
+# Stop re.pm warnings when building OpenSSL, from:
+# https://github.com/microsoft/msquic/issues/3425
+export TERM=dumb
+
 # echo script lines from now one
 #set -v
 if [[ "$BUILDDEPS" == "1" ]] ; then
