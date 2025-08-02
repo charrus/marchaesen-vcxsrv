@@ -16,3 +16,12 @@ $(SUBDIRS:%=%\all): $(XKBDATADIR)
 
 all: $(SUBDIRS:%=%\all)
 
+COMPATFILES=rules\xorg rules\xorg.xml rules\xorg.lst
+$(XKBDATADIR)\xorg: $(XKBDATADIR)\base
+	copy $< $@
+$(XKBDATADIR)\xorg%: $(XKBDATADIR)\base%
+	copy $< $@
+
+rules_DATA := $(COMPATFILES)
+
+DATA_FILES=$(rules_DATA:%=$(XKBDATADIR)\%)

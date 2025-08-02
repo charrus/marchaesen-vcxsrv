@@ -8,6 +8,6 @@ meson compile
 meson install
 popd
 
-cp ../xkbdata/rules/base ../xkbdata/rules/xorg
-cp ../xkbdata/rules/base.lst ../xkbdata/rules/xorg.lst
-cp ../xkbdata/rules/base.xml ../xkbdata/rules/xorg.xml
+# cp ../xkbdata/rules/base ../xkbdata/rules/xorg
+# cp ../xkbdata/rules/base.lst ../xkbdata/rules/xorg.lst
+# cp ../xkbdata/rules/base.xml ../xkbdata/rules/xorg.xml
