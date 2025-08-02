@@ -107,7 +107,7 @@ if [[ "$BUILDRELEASE" == "1" ]] ; then
 	fi
 	check-error 'Error executing perl'
 
-	jom.exe /J$2
+	env TERM=dumb jom.exe /J$2
 	check-error 'Error compiling openssl for release'
 
 	cd ../..
@@ -130,7 +130,7 @@ if [[ "$BUILDDEBUG" == "1" ]] ; then
 	fi
 	check-error 'Error executing perl'
 
-	jom.exe /J$2
+	env TERM=dumb jom.exe /J$2
 	check-error 'Error compiling openssl for debug'
 
 	cd ../..

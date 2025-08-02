@@ -9,12 +9,12 @@ else
     exit 1
 fi
 
-export MHMAKEPATH="tools/mhmake"
+export MHMAKEPATH
 if [ "${BUILDDEBUG}" == "1" ] ; then
-    MHMAKEPATH="${MHMAKEPATH}/Debug"
+    MHMAKEPATH="tools/mhmake/Debug"
 fi
 if [ "${BUILDRELEASE}" == "1" ] ; then
-    MHMAKEPATH="${MHMAKEPATH}/Release"
+    MHMAKEPATH="tools/mhmake/Release"
 fi
 if [ "${IS64}" == "1" ]; then
     MHMAKEPATH="${MHMAKEPATH}64"
@@ -32,12 +32,13 @@ if [ -z "${CYGWIN}" ]; then
     export PATH=/usr/local/bin:/usr/local/sbin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/usr/lib/wsl/lib:${DIR}/${MHMAKEPATH}:/mnt/c/nasm:$PATH:/mnt/c/gnuwin32/bin:/mnt/c/perl/perl/bin
     export MHMAKECONF=${DIR}
     export PYTHON3=/mnt/c/Python39/python.exe
-    export WSLENV="${WSLENV}:MHMAKECONF/l:PYTHON3/l:IS64/l:CFLAGS/l"
+    export WSLENV="${WSLENV}:MHMAKECONF/l:PYTHON3/l:IS64/l:CFLAGS/l:TERM"
 else
     # Docker cygwin build - $PATH is setup in Dockerfile so no need to set it here.
     export PATH=${DIR}/${MHMAKEPATH}:$PATH
     export MHMAKECONF=$(cygpath -w ${DIR})
-    export PYTHON3=python3
+    export PYTHON3=/mnt/c/Python39/python.exe
+    export PYTHON3=$(cygpath -w ${PYTHON3})
 fi
 rm -f commands.sh
 export CFLAGS="-FS"
