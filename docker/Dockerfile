@@ -69,6 +69,20 @@ RUN choco install -y nsis \
         && mkdir %TEMP% \
         && del %ChocolateyInstall%\lib\nsis.install\*.nupkg
 
+# Install meson
+RUN choco install -y meson \
+        && refreshenv \
+        && rd /s /q %TEMP% \
+        && mkdir %TEMP% \
+        && del %ChocolateyInstall%\lib\meson\*.nupkg
+
+# Install ninja
+RUN choco install -y ninja \
+        && refreshenv \
+        && rd /s /q %TEMP% \
+        && mkdir %TEMP% \
+        && del %ChocolateyInstall%\lib\ninja\*.nupkg
+
 # Install gperf
 RUN choco install -y gperf \
         && refreshenv \
@@ -83,6 +97,14 @@ RUN choco install -y dos2unix \
         && mkdir %TEMP% \
         && del %ChocolateyInstall%\lib\dos2unix\*.nupkg
 
+# Install Python3
+RUN choco install -y python39 \
+        && refreshenv \
+        && rd /s /q %TEMP% \
+        && mkdir %TEMP% \
+        && pip install lxml mako pyyaml StrEnum pytest pytest-xdist python-gettext \
+        && del %ChocolateyInstall%\lib\python39\*.nupkg
+
 # Disable creating junctions
 ENV CYGWIN=winsymlinks:lnk
 
@@ -96,7 +118,7 @@ COPY fstab igncr.sh /
 RUN choco install -y cygwin --install-arguments="INSTALLDIR=""C:\tools\cygwin"" /NoStartMenu /DesktopIcon:false" \
         && setx /m path "%path%;c:\tools\cygwin" \
         && refreshenv \
-        && cygwinsetup.exe -q -v -P gettext,getext-devel,vim,gawk,gzip,nasm,sed -W -R c:\tools\cygwin -a x86_64 \
+        && cygwinsetup.exe -q -v -P vim,gawk,gzip,nasm,sed -W -R c:\tools\cygwin -a x86_64 \
         && if exist c:\tools\cygwin\bin\link.exe ren c:\tools\cygwin\bin\link.exe link_cygwin.exe \
         && if exist %ChocolateyInstall%\bin\cygwin.exe ren %ChocolateyInstall%\bin\cygwin.exe choco_cygwin.exe \
         && dos2unix -n c:\fstab c:\tools\cygwin\etc\fstab \
@@ -105,23 +127,6 @@ RUN choco install -y cygwin --install-arguments="INSTALLDIR=""C:\tools\cygwin"" 
         && rd /s /q %TEMP% \
         && mkdir %TEMP% \
         && del %ChocolateyInstall%\lib\cygwin\*.nupkg
-
-# Install Python3
-RUN choco install -y python39 \
-        && copy c:\Python39\python.exe c:\Python39\python3.exe \
-        && refreshenv \
-        && rd /s /q %TEMP% \
-        && mkdir %TEMP% \
-        && pip install lxml \
-        && pip install mako \
-        && pip install pyyaml \
-        && pip install StrEnum \
-        && pip install pytest \
-        && pip install pytest-xdist \
-        && pip install python-gettext \
-        && pip install meson \
-        && pip install ninja \
-        && del %ChocolateyInstall%\lib\python39\*.nupkg
 
 # Install git
 RUN choco install -y git \
@@ -150,6 +155,12 @@ RUN curl -SL --output win_flex_bison.zip https://github.com/lexxmark/winflexbiso
         && unzip -d c:\winflexbison win_flex_bison.zip \
         && setx /m path "%path%;c:\winflexbison" \
         && del win_flex_bison.zip
+
+# Install gettext-iconv-windows
+RUN curl -SL --output gettext.zip https://github.com/mlocati/gettext-iconv-windows/releases/download/v0.25.1-v1.17/gettext0.25.1-iconv1.17-static-64.zip \
+        && unzip -d c:\gettext gettext.zip \
+        && setx /m path "%path%;c:\gettext\bin" \
+        && del gettext.zip
 
 # Launch command prompt (the developer environment is invoked during setenv.*)
 SHELL ["cmd", "/S", "/K"]

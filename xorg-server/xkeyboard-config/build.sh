@@ -1,12 +1,10 @@
 if [ -z "${CYGWIN}" ]; then
   meson setup --prefix=$(realpath ../xkbdata) builddir
 else
-  meson setup --prefix=$(realpath ../xkbdata) builddir
+  meson setup --prefix=$(cygpath -w ../xkbdata) builddir
 fi
-pushd builddir
-meson compile
-meson install
-popd
+meson compile -C builddir
+meson install -C builddir
 
 # cp ../xkbdata/rules/base ../xkbdata/rules/xorg
 # cp ../xkbdata/rules/base.lst ../xkbdata/rules/xorg.lst
