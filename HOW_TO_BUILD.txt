@@ -13,10 +13,6 @@ Prerequisites:
 - Jom for parallell nmake builds
 - Version 2.52.5 of winflexbison unzipped into c:\winflexbison
 - Gperf: choco install gperf
-- GnuWin32 from: https://sourceforge.net/projects/getgnuwin32/files/GetGnuWin32_legacy_install_archive.zip/download
-  unzipped to c:\ so that c:\gnuwin32\bin exists (this is added to $PATH for you during the build) and then run:
-    ren c:\gnuwin32\bin\msgfmt.exe msgfmt.exe.bak
-  as this gets in the way of msgfmt in WSL.
 
 Then start wsl (ensuring the default default distribution is set to the one
 you're using. This is because if you have installed Docker on windows, it has a
