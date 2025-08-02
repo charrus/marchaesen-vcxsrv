@@ -1,7 +1,7 @@
 if [ -z "${CYGWIN}" ]; then
   meson setup --prefix=$(realpath ../xkbdata) builddir
 else
-  meson setup --prefix=$(cygpath -w ../xkbdata) builddir
+  meson setup --prefix=$(realpath ../xkbdata) builddir
 fi
 pushd builddir
 meson compile
