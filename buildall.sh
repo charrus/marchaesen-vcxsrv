@@ -57,6 +57,8 @@ check-error 'Please install jom'
 which perl.exe > /dev/null 2>&1
 check-error 'Please install strawberry perl portable edition into c:\perl'
 
+ORIG_TERM=${TERM}
+
 # echo script lines from now one
 #set -v
 if [[ "$BUILDDEPS" == "1" ]] ; then
@@ -85,6 +87,8 @@ else
 	fi
 fi
 
+export TERM=dumb
+
 if [[ "$BUILDRELEASE" == "1" ]] ; then
 	cd openssl
 
@@ -107,7 +111,7 @@ if [[ "$BUILDRELEASE" == "1" ]] ; then
 	fi
 	check-error 'Error executing perl'
 
-	env TERM=dumb jom.exe /J$2
+	jom.exe /J$2
 	check-error 'Error compiling openssl for release'
 
 	cd ../..
@@ -130,11 +134,13 @@ if [[ "$BUILDDEBUG" == "1" ]] ; then
 	fi
 	check-error 'Error executing perl'
 
-	env TERM=dumb jom.exe /J$2
+	jom.exe /J$2
 	check-error 'Error compiling openssl for debug'
 
 	cd ../..
 fi
+
+TERM=${ORIG_TERM}
 
 cd pthreads
 if [[ "$BUILDRELEASE" == "1" ]] ; then
