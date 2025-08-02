@@ -6,6 +6,6 @@ fi
 meson compile -C builddir
 meson install -C builddir
 
-# cp ../xkbdata/rules/base ../xkbdata/rules/xorg
-# cp ../xkbdata/rules/base.lst ../xkbdata/rules/xorg.lst
-# cp ../xkbdata/rules/base.xml ../xkbdata/rules/xorg.xml
+cp ../xkbdata/rules/base ../xkbdata/rules/xorg
+cp ../xkbdata/rules/base.lst ../xkbdata/rules/xorg.lst
+cp ../xkbdata/rules/base.xml ../xkbdata/rules/xorg.xml
