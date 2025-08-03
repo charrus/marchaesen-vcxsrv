@@ -37,7 +37,7 @@ else
     # Docker cygwin build - $PATH is setup in Dockerfile so no need to set it here.
     export PATH=${DIR}/${MHMAKEPATH}:$PATH
     export MHMAKECONF=$(cygpath -w ${DIR})
-    export PYTHON3=python3
+    export PYTHON3=python
 fi
 rm -f commands.sh
 export CFLAGS="-FS"
