@@ -7,6 +7,9 @@ XKBDATADIR=$(MHMAKECONF)\xorg-server\xkbdata
 $(XKBDATADIR):
 	mkdir -p $(XKBDATADIR)
 	bash ./build.sh
+	copy ..\xkbdata\rules\base ..\xkbdata\rules\xorg
+	copy ..\xkbdata\rules\base.xml ..\xkbdata\rules\xorg.xml
+	copy ..\xkbdata\rules\base.lst ..\xkbdata\rules\xorg.lst
 
 SUBDIRS = compat geometry keycodes symbols types
 
