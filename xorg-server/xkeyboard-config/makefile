@@ -12,5 +12,6 @@ SUBDIRS = compat geometry keycodes symbols types
 
 load_makefile $(SUBDIRS:%=%\makefile MAKESERVER=0 DEBUG=$(DEBUG);)
 
-all: $(SUBDIRS:%=%\all)
+$(SUBDIRS:%=%\all): $(DESTDIR)
 
+all: $(SUBDIRS:%=%\all)
