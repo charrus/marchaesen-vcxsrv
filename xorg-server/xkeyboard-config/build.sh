@@ -1,3 +1,7 @@
+if [ -d builddir ]; then
+  rm -rf builddir
+fi
+
 if [ -z "${CYGWIN}" ]; then
   meson setup --prefix=$(realpath ../xkbdata) builddir
 else

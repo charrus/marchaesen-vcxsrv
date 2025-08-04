@@ -13,8 +13,8 @@ all: $(SUBDIRS:%=%\all)
 $(SUBDIRS:%=%\all): $(XKBDATADIR)
 
 $(XKBDATADIR):
-	mkdir -p $(XKBDATADIR)
-	bash ./build.sh
+	mkdir $@
+	bash.exe ./build.sh
 	copy ..\xkbdata\rules\base ..\xkbdata\rules\xorg
 	copy ..\xkbdata\rules\base.xml ..\xkbdata\rules\xorg.xml
 	copy ..\xkbdata\rules\base.lst ..\xkbdata\rules\xorg.lst
