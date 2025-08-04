@@ -118,7 +118,7 @@ COPY fstab igncr.sh /
 RUN choco install -y cygwin --install-arguments="INSTALLDIR=""C:\tools\cygwin"" /NoStartMenu /DesktopIcon:false" \
         && setx /m path "%path%;c:\tools\cygwin" \
         && refreshenv \
-        && cygwinsetup.exe -q -v -P vim,gawk,gzip,nasm,sed -W -R c:\tools\cygwin -a x86_64 \
+        && cygwinsetup.exe -q -v -P vim,gawk,gzip,sed -x python3 -W -R c:\tools\cygwin -a x86_64 \
         && if exist c:\tools\cygwin\bin\link.exe ren c:\tools\cygwin\bin\link.exe link_cygwin.exe \
         && if exist %ChocolateyInstall%\bin\cygwin.exe ren %ChocolateyInstall%\bin\cygwin.exe choco_cygwin.exe \
         && dos2unix -n c:\fstab c:\tools\cygwin\etc\fstab \
@@ -161,10 +161,6 @@ RUN curl -SL --output gettext.zip https://github.com/mlocati/gettext-iconv-windo
         && unzip -d c:\gettext gettext.zip \
         && setx /m path "%path%;c:\gettext\bin" \
         && del gettext.zip
-
-# Launch command prompt (the developer environment is invoked during setenv.*)
-SHELL ["cmd", "/S", "/K"]
-
 
 # Ensure any local changes have been committed to git
 #
