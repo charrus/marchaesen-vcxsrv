@@ -18,6 +18,3 @@ fcalias.h fcaliastail.h: makealias.py $(PUBLIC_FILES)
 
 fcftalias.h fcftaliastail.h: makealias.py $(PUBLIC_FT_FILES)
 	$(PYTHON3) makealias.py . fcftalias.h fcftaliastail.h $(PUBLIC_FT_FILES)
-
-fcstdint.h:
-	copy fcstdint.h.in $@
