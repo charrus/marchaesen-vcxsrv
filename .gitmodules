@@ -7,3 +7,6 @@
 [submodule "freetype"]
 	path = freetype
 	url = https://gitlab.freedesktop.org/freetype/freetype.git
+[submodule "fontconfig"]
+	path = fontconfig
+	url = https://gitlab.freedesktop.org/fontconfig/fontconfig.git
