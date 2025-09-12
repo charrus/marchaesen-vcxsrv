@@ -4,3 +4,6 @@
 [submodule "xorg-server/xkeyboard-config"]
 	path = xorg-server/xkeyboard-config
 	url = https://gitlab.freedesktop.org/xkeyboard-config/xkeyboard-config.git
+[submodule "freetype"]
+	path = freetype
+	url = https://gitlab.freedesktop.org/freetype/freetype.git
