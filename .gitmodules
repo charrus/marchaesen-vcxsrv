@@ -10,3 +10,6 @@
 [submodule "fontconfig"]
 	path = fontconfig
 	url = https://gitlab.freedesktop.org/fontconfig/fontconfig.git
+[submodule "libXft"]
+	path = libXft
+	url = https://gitlab.freedesktop.org/xorg/lib/libxft.git
