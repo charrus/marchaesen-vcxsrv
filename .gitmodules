@@ -13,3 +13,6 @@
 [submodule "libXft"]
 	path = libXft
 	url = https://gitlab.freedesktop.org/xorg/lib/libxft.git
+[submodule "libexpat"]
+	path = libexpat
+	url = git@github.com:libexpat/libexpat.git
