@@ -19,3 +19,6 @@
 [submodule "libxkbfile"]
 	path = libxkbfile
 	url = https://gitlab.freedesktop.org/xorg/lib/libxkbfile.git
+[submodule "xkbcomp"]
+	path = xkbcomp
+	url = https://gitlab.freedesktop.org/xorg/app/xkbcomp.git
