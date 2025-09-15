@@ -1,0 +1,213 @@
+diff --git a/compat.c b/compat.c
+index 26f4249..03be426 100644
+--- a/compat.c
++++ b/compat.c
+@@ -34,6 +34,8 @@
+ #include "action.h"
+ #include "compat.h"
+ 
++#define WARN1 printf
++
+ typedef struct _SymInterpInfo
+ {
+     CommonInfo defs;
+@@ -112,7 +114,11 @@ InitCompatInfo(CompatInfo * info, XkbDescPtr xkb)
+     info->dflt.defs.fileID = info->fileID;
+     info->dflt.defs.defined = 0;
+     info->dflt.defs.merge = MergeOverride;
++    info->dflt.defs.next = NULL;
+     info->dflt.interp.flags = 0;
++    info->dflt.interp.match = 0;
++    info->dflt.interp.mods = 0;
++    info->dflt.interp.sym = 0;
+     info->dflt.interp.virtual_mod = XkbNoModifier;
+     info->dflt.interp.act.type = XkbSA_NoAction;
+     for (int i = 0; i < XkbAnyActionDataSize; i++)
+@@ -647,14 +653,13 @@ HandleInterpDef(const InterpDef *def, XkbDescPtr xkb, unsigned merge,
+ 
+     if (!ResolveStateAndPredicate(def->match, &pred, &mods, info))
+     {
+-        ERROR("Couldn't determine matching modifiers\n");
++        if (warningLevel > 0)
++          WARN1("Couldn't determine matching modifiers\n");
+         ACTION("Symbol interpretation ignored\n");
+         return True;
+     }
+     if (def->ignore)
+     {
+-        ERROR("Couldn't lookup keysym\n");
+-        ACTION("Symbol interpretation ignored\n");
+         return True;
+     }
+ 
+diff --git a/keycodes.c b/keycodes.c
+index a9dc2b4..0097369 100644
+--- a/keycodes.c
++++ b/keycodes.c
+@@ -292,6 +292,8 @@ InitKeyNamesInfo(KeyNamesInfo * info)
+     info->name = NULL;
+     info->leds = NULL;
+     info->aliases = NULL;
++    info->fileID=-1;
++    info->merge=0;
+     ClearKeyNamesInfo(info);
+     info->errorCount = 0;
+     return;
+diff --git a/listing.c b/listing.c
+index fcf23d3..37be7dd 100644
+--- a/listing.c
++++ b/listing.c
+@@ -76,6 +76,10 @@ SOFTWARE.
+ #include <sys/types.h>
+ #include <sys/stat.h>
+ #include <X11/keysym.h>
++#undef ERROR
++#include <X11/Xwindows.h>
++#undef ERROR
++#define ERROR printf
+ 
+ #define	DEBUG_VAR listingDebug
+ #include "xkbcomp.h"
+@@ -121,6 +125,14 @@ SOFTWARE.
+ #include "tokens.h"
+ #include <X11/extensions/XKBgeom.h>
+ 
++#ifndef S_ISDIR
++# if defined(_S_IFMT) && defined(_S_IFDIR)
++#  define S_ISDIR(a)	(((a) & _S_IFMT) == _S_IFDIR)
++# else
++#  define S_ISDIR(a)	(((a) & S_IFMT) == S_IFDIR)
++# endif
++#endif
++
+ #define	lowbit(x)	((x) & (-(x)))
+ 
+ #ifdef DEBUG
+diff --git a/misc.h b/misc.h
+index e1ed758..0e55701 100644
+--- a/misc.h
++++ b/misc.h
+@@ -30,7 +30,7 @@
+ typedef struct _CommonInfo
+ {
+     unsigned short defined;
+-    unsigned char fileID;
++    int fileID;
+     unsigned char merge;
+     struct _CommonInfo *next;
+ } CommonInfo;
+diff --git a/utils.h b/utils.h
+index 413d42f..2d4228a 100644
+--- a/utils.h
++++ b/utils.h
+@@ -104,6 +104,10 @@ uInformation(const char * /* s */ , ...
+      extern void uWarning(const char * /* s  */ , ...
+     ) _X_ATTRIBUTE_PRINTF(1, 2);
+ 
++#ifdef ERROR
++#undef ERROR
++#endif
++
+ #define ERROR			uError
+ 
+      extern void uError(const char * /* s  */ , ...
+@@ -137,6 +141,8 @@ uInformation(const char * /* s */ , ...
+ #include <strings.h>
+ #include <string.h>
+ 
++#define strncasecmp _strnicmp
++
+ #if defined(_MSC_VER)
+ #define strcasecmp _stricmp
+ #define strncasecmp _strnicmp
+diff --git a/xkbcomp.c b/xkbcomp.c
+index 65d1422..8399792 100644
+--- a/xkbcomp.c
++++ b/xkbcomp.c
+@@ -549,8 +549,8 @@ parseArgs(int argc, char *argv[])
+                 {
+                     WARN("Changing root directory to \"%s\"\n", rootDir);
+                 }
+-                if (chdir(rootDir) == 0)
+-                {
++                XkbAddDirectoryToPath(rootDir);
++                if (XkbAddDirectoryToPath(rootDir) && (warningLevel>0)) {
+                     XkbAddDirectoryToPath(".");
+                 } else if (warningLevel > 0)
+                 {
+@@ -1171,10 +1171,14 @@ main(int argc, char *argv[])
+                     break;
+                 }
+ #endif
++#ifdef _MSC_VER
++		outputFileFd= open(outputFile, O_WRONLY|O_CREAT|O_EXCL|binMode,_S_IREAD | _S_IWRITE);
++#else
+                 outputFileFd =
+                     open(outputFile, O_WRONLY | O_CREAT | O_EXCL,
+                          S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH
+                          | S_IWOTH | binMode);
++#endif
+                 if (outputFileFd < 0)
+                 {
+                     ERROR
+diff --git a/xkbcomp.h b/xkbcomp.h
+index d57a7f6..5dbd724 100644
+--- a/xkbcomp.h
++++ b/xkbcomp.h
+@@ -31,6 +31,7 @@
+ #define	DEBUG_VAR debugFlags
+ #endif
+ 
++#include <unistd.h>
+ #ifdef HAVE_CONFIG_H
+ #include "config.h"
+ #endif
+diff --git a/xkbparse.y b/xkbparse.y
+index 5253e48..42518e3 100644
+--- a/xkbparse.y
++++ b/xkbparse.y
+@@ -91,6 +91,10 @@
+ %{
+ #ifdef DEBUG
+ #define	YYDEBUG 1
++
++#define YYMALLOC malloc
++#define YYFREE free
++
+ #define	DEBUG_VAR parseDebug
+ unsigned int parseDebug;
+ #endif
+diff --git a/xkbpath.c b/xkbpath.c
+index 6d9d13a..ea3efdd 100644
+--- a/xkbpath.c
++++ b/xkbpath.c
+@@ -30,6 +30,7 @@
+ #define	DEBUG_VAR debugFlags
+ #include "utils.h"
+ #include <stdlib.h>
++#include <unistd.h>
+ #include <X11/extensions/XKM.h>
+ #include "xkbpath.h"
+ 
+diff --git a/xkbscan.c b/xkbscan.c
+index fc2d0a7..125dee8 100644
+--- a/xkbscan.c
++++ b/xkbscan.c
+@@ -57,7 +57,7 @@ static int readBufPos = 0;
+ static int readBufLen = 0;
+ 
+ #ifdef DEBUG
+-extern int debugFlags;
++extern unsigned int debugFlags;
+ 
+ static char *
+ tokText(int tok)
+@@ -616,7 +616,7 @@ yyGetIdent(int first)
+ static int
+ yyGetNumber(int ch)
+ {
+-    const int nMaxBuffSize = 1024;
++    #define nMaxBuffSize 1024
+     int isFloat = 0;
+     char buf[nMaxBuffSize];
+     int nInBuf = 0;

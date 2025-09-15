@@ -9,4 +9,4 @@ cp -r libxkbfile.in/* libxkbfile
 rm -rf expat
 cp -r libexpat/expat expat
 cp -r expat.in/* expat
-cp -r xkbcomp.in/* xkbcomp
+./xkbcomp.in/prebuild.sh
