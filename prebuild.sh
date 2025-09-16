@@ -10,3 +10,4 @@ rm -rf expat
 cp -r libexpat/expat expat
 cp -r expat.in/* expat
 ./xkbcomp.in/prebuild.sh
+./libXfont2.in/prebuild.sh

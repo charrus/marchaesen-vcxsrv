@@ -22,3 +22,6 @@
 [submodule "xkbcomp"]
 	path = xkbcomp
 	url = https://gitlab.freedesktop.org/xorg/app/xkbcomp.git
+[submodule "libXfont2"]
+	path = libXfont2
+	url = https://gitlab.freedesktop.org/xorg/lib/libxfont.git

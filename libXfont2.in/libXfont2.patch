@@ -1,0 +1,43 @@
+diff --git a/src/fc/fsio.c b/src/fc/fsio.c
+index 3be2463..58c115c 100644
+--- a/src/fc/fsio.c
++++ b/src/fc/fsio.c
+@@ -54,6 +54,7 @@
+ #endif
+ #include	<errno.h>
+ #ifdef WIN32
++#undef EWOULDBLOCK
+ #define EWOULDBLOCK WSAEWOULDBLOCK
+ #undef EINTR
+ #define EINTR WSAEINTR
+diff --git a/src/fontfile/bufio.c b/src/fontfile/bufio.c
+index 7465f72..b413efb 100644
+--- a/src/fontfile/bufio.c
++++ b/src/fontfile/bufio.c
+@@ -63,7 +63,7 @@ BufFileCreate (char *private,
+     return f;
+ }
+ 
+-#define FileDes(f)  ((int)(long) (f)->private)
++#define FileDes(f)  ((int)(intptr_t) (f)->private)
+ 
+ static int
+ BufFileRawFill (BufFilePtr f)
+@@ -127,7 +127,7 @@ BufFileOpenRead (int fd)
+     /* hv: I'd bet WIN32 has the same effect here */
+     setmode(fd,O_BINARY);
+ #endif
+-    return BufFileCreate ((char *)(long) fd, BufFileRawFill, 0, BufFileRawSkip, BufFileRawClose);
++    return BufFileCreate ((char *)(intptr_t) fd, BufFileRawFill, 0, BufFileRawSkip, BufFileRawClose);
+ }
+ 
+ static int
+@@ -162,7 +162,7 @@ BufFileOpenWrite (int fd)
+     /* hv: I'd bet WIN32 has the same effect here */
+     setmode(fd,O_BINARY);
+ #endif
+-    f = BufFileCreate ((char *)(long) fd, 0, BufFileRawFlush, 0, BufFileFlush);
++    f = BufFileCreate ((char *)(intptr_t) fd, 0, BufFileRawFlush, 0, BufFileFlush);
+     if (f != NULL) {
+ 	f->bufp = f->buffer;
+ 	f->left = BUFFILESIZE;
