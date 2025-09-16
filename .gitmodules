@@ -25,3 +25,6 @@
 [submodule "libXfont2"]
 	path = libXfont2
 	url = https://gitlab.freedesktop.org/xorg/lib/libxfont.git
+[submodule "libX11"]
+	path = libX11
+	url = https://gitlab.freedesktop.org/xorg/lib/libx11.git
