@@ -11,3 +11,4 @@ cp -r libexpat/expat expat
 cp -r expat.in/* expat
 ./xkbcomp.in/prebuild.sh
 ./libXfont2.in/prebuild.sh
+./libX11.in/prebuild.sh
