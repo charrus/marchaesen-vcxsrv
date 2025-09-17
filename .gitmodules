@@ -28,3 +28,6 @@
 [submodule "libX11"]
 	path = libX11
 	url = https://gitlab.freedesktop.org/xorg/lib/libx11.git
+[submodule "libXau"]
+	path = libXau
+	url = https://gitlab.freedesktop.org/xorg/lib/libxau.git
