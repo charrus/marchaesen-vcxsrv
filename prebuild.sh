@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/sh -x
 
 git submodule init
 git submodule update
@@ -13,3 +13,4 @@ cp -r expat.in/* expat
 ./libXfont2.in/prebuild.sh
 ./libX11.in/prebuild.sh
 ./libXau.in/prebuild.sh
+./libXaw.in/prebuild.sh
