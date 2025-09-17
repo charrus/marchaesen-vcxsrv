@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/sh -x
 
 git submodule init
 git submodule update
