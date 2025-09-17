@@ -1,43 +1,47 @@
 diff --git a/src/Actions.c b/src/Actions.c
-index ae330d5..2f09156 100644
+index abb61ef..8202a4d 100644
 --- a/src/Actions.c
 +++ b/src/Actions.c
-@@ -463,7 +463,7 @@ XawSetValuesAction(Widget w, XEvent *event,
- #ifdef LONG64
- 	c_8 = (long)from.addr;
- #else
--	c_4 = (int)from.addr;
-+	c_4 = (int)(uintptr_t)from.addr;
- #endif
-       else if (!XtConvertAndStore(w, XtRString, &from,
- 				  XrmQuarkToString(resource->qtype), &to))
+@@ -159,9 +159,9 @@ XawParseBoolean(Widget w, String param, XEvent *event, Bool *succeed)
+       double dd = strtod(param, &tmp);
+       int value = (int) dd;
+ 
+-      if (*tmp == '\0')
+-        return (value);
+-    }
++  value = (int)strtod(param, &tmp);
++  if (*tmp == '\0')
++    return (value);
+ 
+   if (XmuCompareISOLatin1(param, "true") == 0
+       || XmuCompareISOLatin1(param, "yes") == 0
 diff --git a/src/AsciiSink.c b/src/AsciiSink.c
-index 29850ba..9814045 100644
+index 1736a76..cda6f37 100644
 --- a/src/AsciiSink.c
 +++ b/src/AsciiSink.c
-@@ -1656,7 +1656,7 @@ GetGC(AsciiSinkObject sink)
-     XGCValues values;
- 
-     /* XXX We dont want do share a gc that will change the clip-mask */
--    values.clip_x_origin = (int)(long)sink;
-+    values.clip_x_origin = (int)(uintptr_t)sink;
-     values.clip_mask = None;
-     values.font = sink->ascii_sink.font->fid;
-     values.graphics_exposures = False;
+@@ -1633,7 +1633,7 @@ GetGC(AsciiSinkObject sink)
+ 			  GCForeground | GCBackground);
+     XGCValues values = {
+ 	/* XXX We dont want to share a gc that will change the clip-mask */
+-	.clip_x_origin = (int)(long)sink,
++	.clip_x_origin = (int)(uintptr_t)sink,
+ 	.clip_mask = None,
+ 	.font = sink->ascii_sink.font->fid,
+ 	.graphics_exposures = False,
 diff --git a/src/AsciiSrc.c b/src/AsciiSrc.c
-index 7833514..ca52a7a 100644
+index a3703ae..e2e8881 100644
 --- a/src/AsciiSrc.c
 +++ b/src/AsciiSrc.c
-@@ -1478,7 +1478,7 @@ InitStringOrFile(AsciiSrcObject src, Bool newString)
+@@ -1488,7 +1488,7 @@ InitStringOrFile(AsciiSrcObject src, Bool newString)
+ 	int fd = open(src->ascii_src.string, (int)open_mode, 0666);
  
-     if (!src->ascii_src.is_tempfile) {
- 	if ((fd = open(src->ascii_src.string, (int)open_mode, 0666)) != -1) {
--	    if ((file = fdopen(fd, fdopen_mode))) {
-+	    if ((file = _fdopen(fd, fdopen_mode))) {
+ 	if (fd != -1) {
+-	    FILE *file = fdopen(fd, fdopen_mode);
++	    FILE *file = _fdopen(fd, fdopen_mode);
+ 
+ 	    if (file != NULL) {
  		(void)fseek(file, 0, SEEK_END);
- 		src->ascii_src.length = (XawTextPosition)ftell(file);
- 		return (file);
-@@ -1776,7 +1776,7 @@ GetDefaultPieceSize(Widget w _X_UNUSED, int offset _X_UNUSED, XrmValue *value)
+@@ -1788,7 +1788,7 @@ GetDefaultPieceSize(Widget w _X_UNUSED, int offset _X_UNUSED, XrmValue *value)
      static XPointer pagesize;
  
      if (pagesize == NULL) {
@@ -47,10 +51,10 @@ index 7833514..ca52a7a 100644
  	    pagesize = (XPointer)BUFSIZ;
      }
 diff --git a/src/Command.c b/src/Command.c
-index d9db81a..6da032b 100644
+index a2b298a..a865a46 100644
 --- a/src/Command.c
 +++ b/src/Command.c
-@@ -568,10 +568,10 @@ XawCommandGetValuesHook(Widget w, ArgList args, Cardinal *num_args)
+@@ -570,10 +570,10 @@ XawCommandGetValuesHook(Widget w, ArgList args, Cardinal *num_args)
      for (i = 0; i < *num_args; i++) {
  	if (STR_EQUAL(args[i].name, XtNforeground))
  	    *((String*)args[i].value) = cbw->command.set ?
@@ -64,10 +68,10 @@ index d9db81a..6da032b 100644
  }
  
 diff --git a/src/DisplayList.c b/src/DisplayList.c
-index ae5e7c6..c8f4782 100644
+index 457485c..8f2e325 100644
 --- a/src/DisplayList.c
 +++ b/src/DisplayList.c
-@@ -793,7 +793,7 @@ DlForeground(Widget w, XtPointer args, XtPointer data,
+@@ -789,7 +789,7 @@ DlForeground(Widget w, XtPointer args, XtPointer data,
  	     XEvent *event _X_UNUSED, Region region _X_UNUSED)
  {
    XawXlibData *xdata = (XawXlibData *)data;
@@ -76,7 +80,7 @@ index ae5e7c6..c8f4782 100644
  
    if (xdata->values.foreground != foreground)
      {
-@@ -809,7 +809,7 @@ DlBackground(Widget w, XtPointer args, XtPointer data,
+@@ -805,7 +805,7 @@ DlBackground(Widget w, XtPointer args, XtPointer data,
  	     XEvent *event _X_UNUSED, Region region _X_UNUSED)
  {
    XawXlibData *xdata = (XawXlibData *)data;
@@ -85,16 +89,16 @@ index ae5e7c6..c8f4782 100644
  
    if (xdata->values.background != background)
      {
-@@ -914,7 +914,7 @@ DlLineWidth(Widget w, XtPointer args, XtPointer data,
+@@ -912,7 +912,7 @@ DlLineWidth(Widget w, XtPointer args, XtPointer data,
  	    XEvent *event _X_UNUSED, Region region _X_UNUSED)
  {
    XawXlibData *xdata = (XawXlibData *)data;
 -  unsigned line_width = (unsigned)(unsigned long)args;
 +  unsigned line_width = (unsigned)(uintptr_t)args;
  
-   if (xdata->values.line_width != line_width)
+   if ((unsigned)xdata->values.line_width != line_width)
      {
-@@ -990,7 +990,7 @@ DlArcMode(Widget w, XtPointer args, XtPointer data,
+@@ -987,7 +987,7 @@ DlArcMode(Widget w, XtPointer args, XtPointer data,
  	  XEvent *event _X_UNUSED, Region region _X_UNUSED)
  {
    XawXlibData *xdata = (XawXlibData *)data;
@@ -103,7 +107,7 @@ index ae5e7c6..c8f4782 100644
  
    if (xdata->values.arc_mode != arc_mode)
      {
-@@ -1006,7 +1006,7 @@ DlCoordMode(Widget w _X_UNUSED, XtPointer args, XtPointer data,
+@@ -1003,7 +1003,7 @@ DlCoordMode(Widget w _X_UNUSED, XtPointer args, XtPointer data,
  	    XEvent *event _X_UNUSED, Region region _X_UNUSED)
  {
    XawXlibData *xdata = (XawXlibData *)data;
@@ -112,7 +116,7 @@ index ae5e7c6..c8f4782 100644
  
    xdata->mode = mode;
  }
-@@ -1017,7 +1017,7 @@ DlShapeMode(Widget w _X_UNUSED, XtPointer args, XtPointer data,
+@@ -1014,7 +1014,7 @@ DlShapeMode(Widget w _X_UNUSED, XtPointer args, XtPointer data,
  	    XEvent *event _X_UNUSED, Region region _X_UNUSED)
  {
    XawXlibData *xdata = (XawXlibData *)data;
@@ -121,7 +125,7 @@ index ae5e7c6..c8f4782 100644
  
    xdata->shape = shape;
  }
-@@ -1028,7 +1028,7 @@ DlLineStyle(Widget w, XtPointer args, XtPointer data,
+@@ -1025,7 +1025,7 @@ DlLineStyle(Widget w, XtPointer args, XtPointer data,
  	    XEvent *event _X_UNUSED, Region region _X_UNUSED)
  {
    XawXlibData *xdata = (XawXlibData *)data;
@@ -130,7 +134,7 @@ index ae5e7c6..c8f4782 100644
  
    if (xdata->values.line_style != line_style)
      {
-@@ -1044,7 +1044,7 @@ DlCapStyle(Widget w, XtPointer args, XtPointer data,
+@@ -1041,7 +1041,7 @@ DlCapStyle(Widget w, XtPointer args, XtPointer data,
  	   XEvent *event _X_UNUSED, Region region _X_UNUSED)
  {
    XawXlibData *xdata = (XawXlibData *)data;
@@ -139,7 +143,7 @@ index ae5e7c6..c8f4782 100644
  
    if (xdata->values.cap_style != cap_style)
      {
-@@ -1060,7 +1060,7 @@ DlJoinStyle(Widget w, XtPointer args, XtPointer data,
+@@ -1057,7 +1057,7 @@ DlJoinStyle(Widget w, XtPointer args, XtPointer data,
  	    XEvent *event _X_UNUSED, Region region _X_UNUSED)
  {
    XawXlibData *xdata = (XawXlibData *)data;
@@ -148,7 +152,7 @@ index ae5e7c6..c8f4782 100644
  
    if (xdata->values.join_style != join_style)
      {
-@@ -1076,7 +1076,7 @@ DlFillStyle(Widget w, XtPointer args, XtPointer data,
+@@ -1073,7 +1073,7 @@ DlFillStyle(Widget w, XtPointer args, XtPointer data,
  	    XEvent *event _X_UNUSED, Region region _X_UNUSED)
  {
    XawXlibData *xdata = (XawXlibData *)data;
@@ -157,7 +161,7 @@ index ae5e7c6..c8f4782 100644
  
    if (xdata->values.fill_style != fill_style)
      {
-@@ -1092,7 +1092,7 @@ DlFillRule(Widget w, XtPointer args, XtPointer data,
+@@ -1089,7 +1089,7 @@ DlFillRule(Widget w, XtPointer args, XtPointer data,
  	   XEvent *event _X_UNUSED, Region region _X_UNUSED)
  {
    XawXlibData *xdata = (XawXlibData *)data;
@@ -166,7 +170,7 @@ index ae5e7c6..c8f4782 100644
  
    if (xdata->values.fill_rule != fill_rule)
      {
-@@ -1147,7 +1147,7 @@ DlFunction(Widget w, XtPointer args, XtPointer data,
+@@ -1144,7 +1144,7 @@ DlFunction(Widget w, XtPointer args, XtPointer data,
  	   XEvent *event _X_UNUSED, Region region _X_UNUSED)
  {
    XawXlibData *xdata = (XawXlibData *)data;
@@ -175,7 +179,7 @@ index ae5e7c6..c8f4782 100644
  
    if (function != xdata->values.function)
      {
-@@ -1163,7 +1163,7 @@ DlPlaneMask(Widget w, XtPointer args, XtPointer data,
+@@ -1160,7 +1160,7 @@ DlPlaneMask(Widget w, XtPointer args, XtPointer data,
  	    XEvent *event _X_UNUSED, Region region _X_UNUSED)
  {
    XawXlibData *xdata = (XawXlibData *)data;
@@ -184,7 +188,7 @@ index ae5e7c6..c8f4782 100644
  
    if (xdata->values.plane_mask != plane_mask)
      {
-@@ -1230,7 +1230,7 @@ DlFont(Widget w, XtPointer args, XtPointer data,
+@@ -1227,7 +1227,7 @@ DlFont(Widget w, XtPointer args, XtPointer data,
         XEvent *event _X_UNUSED, Region region _X_UNUSED)
  {
    XawXlibData *xdata = (XawXlibData *)data;
@@ -193,7 +197,7 @@ index ae5e7c6..c8f4782 100644
  
    if (xdata->values.font != font)
      {
-@@ -1262,7 +1262,7 @@ DlSubwindowMode(Widget w, XtPointer args, XtPointer data,
+@@ -1259,7 +1259,7 @@ DlSubwindowMode(Widget w, XtPointer args, XtPointer data,
  		XEvent *event _X_UNUSED, Region region _X_UNUSED)
  {
    XawXlibData *xdata = (XawXlibData *)data;
@@ -202,7 +206,7 @@ index ae5e7c6..c8f4782 100644
  
    if (xdata->values.subwindow_mode != subwindow_mode)
      {
-@@ -1278,7 +1278,7 @@ DlExposures(Widget w, XtPointer args, XtPointer data,
+@@ -1275,7 +1275,7 @@ DlExposures(Widget w, XtPointer args, XtPointer data,
  	    XEvent *event _X_UNUSED, Region region _X_UNUSED)
  {
    XawXlibData *xdata = (XawXlibData *)data;
@@ -211,7 +215,7 @@ index ae5e7c6..c8f4782 100644
  
    if (xdata->values.graphics_exposures != graphics_exposures)
      {
-@@ -1742,7 +1742,7 @@ _Xaw_Xlib_ArgsInitProc(String proc_name, String *params, Cardinal *num_params,
+@@ -1737,7 +1737,7 @@ _Xaw_Xlib_ArgsInitProc(String proc_name, String *params, Cardinal *num_params,
  	if (*num_params == 1 &&
  	    XAllocNamedColor(DisplayOfScreen(screen), colormap,
  			     params[0], &xcolor, &xcolor))
@@ -220,69 +224,69 @@ index ae5e7c6..c8f4782 100644
        } break;
      case MASK:
      case UMASK:
-@@ -1751,7 +1751,7 @@ _Xaw_Xlib_ArgsInitProc(String proc_name, String *params, Cardinal *num_params,
-       break;
-     case LWIDTH:
-       if (*num_params == 1)
--	retval = (void *)read_int((char *)params[0], NULL);
-+	retval = (void *)(uintptr_t)read_int((char *)params[0], NULL);
-       break;
-     case ARCMODE:
-       if (*num_params == 1)
-@@ -1896,7 +1896,7 @@ _Xaw_Xlib_ArgsInitProc(String proc_name, String *params, Cardinal *num_params,
-       break;
-     case PLANEMASK:
-       if (*num_params == 1)
--	retval = (void *)read_int((char *)params[0], NULL);
-+	retval = (void *)(uintptr_t)read_int((char *)params[0], NULL);
-       break;
-     case DSTRING:
-     case PSTRING:
-@@ -1914,7 +1914,7 @@ _Xaw_Xlib_ArgsInitProc(String proc_name, String *params, Cardinal *num_params,
-       break;
-     case FONT:
-       if (*num_params == 1)
--	retval = (void *)XLoadFont(DisplayOfScreen(screen), params[0]);
-+	retval = (void *)(uintptr_t)XLoadFont(DisplayOfScreen(screen), params[0]);
-       break;
-     case DASHES:
-       if (*num_params && *num_params < 127)
-@@ -1942,7 +1942,7 @@ _Xaw_Xlib_ArgsInitProc(String proc_name, String *params, Cardinal *num_params,
+@@ -1748,7 +1748,7 @@ _Xaw_Xlib_ArgsInitProc(String proc_name, String *params, Cardinal *num_params,
        if (*num_params == 1)
  	{
+ 	  long x = read_int((char *)params[0], NULL);
+-	  retval = (void *)x;
++	  retval = (void *)(uintptr_t)x;
+ 	}
+       break;
+     case ARCMODE:
+@@ -1896,7 +1896,7 @@ _Xaw_Xlib_ArgsInitProc(String proc_name, String *params, Cardinal *num_params,
+       if (*num_params == 1)
+ 	{
+ 	  long x = read_int((char *)params[0], NULL);
+-	  retval = (void *)x;
++	  retval = (void *)(uintptr_t)x;
+ 	}
+       break;
+     case DSTRING:
+@@ -1917,7 +1917,7 @@ _Xaw_Xlib_ArgsInitProc(String proc_name, String *params, Cardinal *num_params,
+       if (*num_params == 1)
+ 	{
+ 	  Font x = XLoadFont(DisplayOfScreen(screen), params[0]);
+-	  retval = (void *)x;
++	  retval = (void *)(uintptr_t)x;
+ 	}
+       break;
+     case DASHES:
+@@ -1948,7 +1948,7 @@ _Xaw_Xlib_ArgsInitProc(String proc_name, String *params, Cardinal *num_params,
  	  if (isdigit((unsigned char)params[0][0]) || params[0][0] == '+' || params[0][0] == '-')
--	    retval = (void *)read_int((char *)params[0], NULL);
-+	    retval = (void *)(uintptr_t)read_int((char *)params[0], NULL);
+ 	    {
+ 	      long x = read_int((char *)params[0], NULL);
+-	      retval = (void *)x;
++	      retval = (void *)(uintptr_t)x;
+ 	    }
  	  else if (XmuCompareISOLatin1(params[0], "true") == 0 ||
  	    XmuCompareISOLatin1(params[0], "on") == 0)
- 	    retval = (void *)True;
 diff --git a/src/MultiSink.c b/src/MultiSink.c
-index c9d5169..c2714ed 100644
+index 6bb2465..13227eb 100644
 --- a/src/MultiSink.c
 +++ b/src/MultiSink.c
 @@ -659,7 +659,7 @@ GetGC(MultiSinkObject sink)
-     XGCValues values;
- 
-     /* XXX We dont want do share a gc that will change the clip-mask */
--    values.clip_x_origin = (int)(long)sink;
-+    values.clip_x_origin = (int)(uintptr_t)sink;
-     values.clip_mask = None;
-     values.graphics_exposures = False;
+ 			  GCForeground | GCBackground);
+     XGCValues values = {
+ 	/* XXX We dont want to share a gc that will change the clip-mask */
+-	.clip_x_origin = (int)(long)sink,
++	.clip_x_origin = (int)(uintptr_t)sink,
+ 	.clip_mask = None,
+ 	.graphics_exposures = False,
  
 diff --git a/src/MultiSrc.c b/src/MultiSrc.c
-index a9e84ba..5f5aa03 100644
+index 5d23396..da0aff3 100644
 --- a/src/MultiSrc.c
 +++ b/src/MultiSrc.c
-@@ -1253,7 +1253,7 @@ InitStringOrFile(MultiSrcObject src, Bool newString)
+@@ -1256,7 +1256,7 @@ InitStringOrFile(MultiSrcObject src, Bool newString)
  
      if (!src->multi_src.is_tempfile) {
  	if ((fd = open((char *)src->multi_src.string, (int)open_mode, 0666)) != -1) {
 -	    if ((file = fdopen(fd, fdopen_mode)) != NULL) {
-+	    if ((file = _fdopen(fd, fdopen_mode)) != NULL) {
++	    if ((file = fdopen(fd, _fdopen_mode)) != NULL) {
  		(void)fseek(file, 0, SEEK_END);
  		src->multi_src.length = (XawTextPosition)ftell(file);
  		return(file);
-@@ -1608,7 +1608,7 @@ GetDefaultPieceSize(Widget w _X_UNUSED, int offset _X_UNUSED, XrmValue *value)
+@@ -1611,7 +1611,7 @@ GetDefaultPieceSize(Widget w _X_UNUSED, int offset _X_UNUSED, XrmValue *value)
      static XPointer pagesize;
  
      if (pagesize == 0) {
@@ -292,7 +296,7 @@ index a9e84ba..5f5aa03 100644
  	    pagesize = (XPointer)BUFSIZ;
      }
 diff --git a/src/Pixmap.c b/src/Pixmap.c
-index 7072eb3..30f60ab 100644
+index 0083b8c..708250c 100644
 --- a/src/Pixmap.c
 +++ b/src/Pixmap.c
 @@ -47,7 +47,7 @@
@@ -340,7 +344,7 @@ index 7072eb3..30f60ab 100644
  			       (*cache)->num_elems, sizeof(XtPointer),
  			       bcmp_long);
  
-@@ -492,7 +492,7 @@ _XawGetCache(XawCache *xaw, Screen *screen, Colormap colormap, int depth)
+@@ -493,7 +493,7 @@ _XawGetCache(XawCache *xaw, Screen *screen, Colormap colormap, int depth)
  		XtRealloc((char *)xaw->elems,
  			  (Cardinal)(sizeof(XtPointer) * (size_t)xaw->num_elems));
  	    }
@@ -349,15 +353,6 @@ index 7072eb3..30f60ab 100644
  	  pcache->elems = NULL;
  	  pcache->num_elems = 0;
  	  xaw->elems[xaw->num_elems - 1] = (XtPointer)pcache;
-@@ -595,7 +595,7 @@ XawPixmapFromXPixmap(Pixmap pixmap,
-     return (NULL);
- 
-   /* Pixmap */
--  x_pixmap = (XawPixmap **)bsearch((void *)pixmap, cache->elems,
-+  x_pixmap = (XawPixmap **)bsearch((void *)(uintptr_t)pixmap, cache->elems,
- 				   cache->num_elems, sizeof(XtPointer),
- 				   bcmp_x_cache);
-   if (!x_pixmap)
 @@ -746,7 +746,11 @@ BitmapLoader(XawParams *params, Screen *screen, Colormap colormap, int depth,
    if (params->name[0] != '/' && params->name[0] != '.')
      {
@@ -367,7 +362,7 @@ index 7072eb3..30f60ab 100644
 +	#else
  	sub[0].substitution = getenv("HOME");
 +	#endif
-       sub[1].substitution = params->name;
+       sub[1].substitution = (_XtString)params->name;
        if (pixmap_path == NULL)
  	GetResourcePixmapPath(DisplayOfScreen(screen));
 diff --git a/src/Private.h b/src/Private.h
@@ -384,10 +379,10 @@ index 9067204..dd5f4d3 100644
  #define XawMin(a, b) ((a) < (b) ? (a) : (b))
  #define XawAbs(a)    ((a) < 0 ? -(a) : (a))
 diff --git a/src/Scrollbar.c b/src/Scrollbar.c
-index 5bc8db9..74b05b7 100644
+index ac75083..58bd653 100644
 --- a/src/Scrollbar.c
 +++ b/src/Scrollbar.c
-@@ -792,7 +792,7 @@ NotifyScroll(Widget gw, XEvent *event, String *params, Cardinal *num_params)
+@@ -795,7 +795,7 @@ NotifyScroll(Widget gw, XEvent *event, String *params, Cardinal *num_params)
  	    /*FALLTHROUGH*/
  	case 'F':
  	case 'f':
@@ -397,10 +392,10 @@ index 5bc8db9..74b05b7 100644
  	case 'C':
  	case 'c':    /* NotifyThumb has already called the thumbProc(s) */
 diff --git a/src/Text.c b/src/Text.c
-index da15a37..b1fc917 100644
+index 960214c..f06a9d6 100644
 --- a/src/Text.c
 +++ b/src/Text.c
-@@ -1738,7 +1738,7 @@ static void
+@@ -1740,7 +1740,7 @@ static void
  HScroll(Widget w _X_UNUSED, XtPointer closure, XtPointer callData)
  {
      TextWidget ctx = (TextWidget)closure;
@@ -409,16 +404,16 @@ index da15a37..b1fc917 100644
  
      if (pixels > 0) {
  	long max;
-@@ -1767,7 +1767,7 @@ HJump(Widget w, XtPointer closure, XtPointer callData)
+@@ -1770,7 +1770,7 @@ HJump(Widget w, XtPointer closure, XtPointer callData)
      pixels = ctx->text.left_margin -
- 	     (ctx->text.r_margin.left - (int)(percent * (float)GetWidestLine(ctx)));
+ 	     (ctx->text.r_margin.left - (int)(percent * (float)value));
  
 -    HScroll(w, (XtPointer)ctx, (XtPointer)pixels);
 +    HScroll(w, (XtPointer)ctx, (XtPointer)(uintptr_t)pixels);
  }
  
  /*
-@@ -1830,7 +1830,7 @@ static void
+@@ -1833,7 +1833,7 @@ static void
  VScroll(Widget w _X_UNUSED, XtPointer closure, XtPointer callData)
  {
      TextWidget ctx = (TextWidget)closure;
@@ -428,7 +423,7 @@ index da15a37..b1fc917 100644
      height = XtHeight(ctx) - VMargins(ctx);
      if (height < 1)
 diff --git a/src/TextAction.c b/src/TextAction.c
-index 5eae39e..1c9cd47 100644
+index 09e22f2..6fe86b2 100644
 --- a/src/TextAction.c
 +++ b/src/TextAction.c
 @@ -37,6 +37,7 @@ in this Software without prior written authorization from The Open Group.
@@ -450,10 +445,10 @@ index 5eae39e..1c9cd47 100644
   * Prototypes
   */
 diff --git a/src/TextPop.c b/src/TextPop.c
-index 9bf35ee..c7b15a9 100644
+index 499c340..76cfda1 100644
 --- a/src/TextPop.c
 +++ b/src/TextPop.c
-@@ -865,7 +865,7 @@ DoSearch(struct SearchAndReplace *search)
+@@ -872,7 +872,7 @@ DoSearch(struct SearchAndReplace *search)
  #endif /* OLDXAW */
      }
  
@@ -462,7 +457,7 @@ index 9bf35ee..c7b15a9 100644
        ((XPointer)XawToggleGetCurrent(search->left_toggle) - R_OFFSET);
  
      pos = XawTextSearch(tw, dir, &text);
-@@ -1020,7 +1020,7 @@ Replace(struct SearchAndReplace *search, Bool once_only, Bool show_current)
+@@ -1027,7 +1027,7 @@ Replace(struct SearchAndReplace *search, Bool once_only, Bool show_current)
      else
  	replace.length = (int)strlen(replace.ptr);
  
@@ -472,7 +467,7 @@ index 9bf35ee..c7b15a9 100644
  
      redisplay = !once_only || (once_only && !show_current);
 diff --git a/src/TextSink.c b/src/TextSink.c
-index 3b43576..32c5ea0 100644
+index 8c85492..5625421 100644
 --- a/src/TextSink.c
 +++ b/src/TextSink.c
 @@ -113,7 +113,7 @@ static XtResource resources[] = {
@@ -484,7 +479,7 @@ index 3b43576..32c5ea0 100644
      XtCColor,
      XtRPixel,
      sizeof(Pixel),
-@@ -1015,7 +1015,7 @@ static Cardinal num_prop_lists;
+@@ -1001,7 +1001,7 @@ static Cardinal num_prop_lists;
  static int
  bcmp_qident(_Xconst void *left, _Xconst void *right)
  {
@@ -493,7 +488,7 @@ index 3b43576..32c5ea0 100644
  }
  
  static int
-@@ -1163,7 +1163,7 @@ _XawTextSinkGetProperty(XawTextPropertyList *list, XrmQuark property)
+@@ -1149,7 +1149,7 @@ _XawTextSinkGetProperty(XawTextPropertyList *list, XrmQuark property)
  {
      if (property != NULLQUARK && list && list->properties) {
  	XawTextProperty **ptr = (XawTextProperty**)
@@ -502,7 +497,7 @@ index 3b43576..32c5ea0 100644
  		    list->properties, list->num_properties,
  		    sizeof(XawTextProperty*), bcmp_qident);
  
-@@ -1506,7 +1506,7 @@ XawTextSinkConvertPropertyList(String name, String spec, Screen *screen,
+@@ -1492,7 +1492,7 @@ XawTextSinkConvertPropertyList(String name, String spec, Screen *screen,
      char buffer[BUFSIZ];
  
      if (prop_lists) ptr = (XawTextPropertyList**)
@@ -511,7 +506,7 @@ index 3b43576..32c5ea0 100644
  		sizeof(XawTextPropertyList*), bcmp_qident);
      if (ptr) {
  	propl = *ptr;
-@@ -1759,7 +1759,7 @@ CvtStringToPropertyList(Display *dpy, XrmValue *args, Cardinal *num_args,
+@@ -1745,7 +1745,7 @@ CvtStringToPropertyList(Display *dpy, XrmValue *args, Cardinal *num_args,
      if (w) {
  	XawTextPropertyList **ptr = NULL;
  	if (prop_lists) ptr = (XawTextPropertyList**)
@@ -521,10 +516,10 @@ index 3b43576..32c5ea0 100644
  		    sizeof(XawTextPropertyList*), bcmp_qident);
  
 diff --git a/src/TextSrc.c b/src/TextSrc.c
-index adea9b3..c655f6e 100644
+index 0138e2a..9e7d5d6 100644
 --- a/src/TextSrc.c
 +++ b/src/TextSrc.c
-@@ -1191,7 +1191,7 @@ exit_anchor_loop:
+@@ -1199,7 +1199,7 @@ exit_anchor_loop:
  	TellSourceChanged(src, left, right, block, lines);
  	/* Call callbacks, we have changed the buffer */
  	XtCallCallbacks(w, XtNcallback,
@@ -534,10 +529,10 @@ index adea9b3..c655f6e 100644
  
  #endif /* OLDXAW */
 diff --git a/src/Toggle.c b/src/Toggle.c
-index eb6281d..7c07aed 100644
+index 2810890..052e96f 100644
 --- a/src/Toggle.c
 +++ b/src/Toggle.c
-@@ -284,7 +284,7 @@ static void
+@@ -287,7 +287,7 @@ static void
  Notify(Widget w, XEvent *event _X_UNUSED, String *params _X_UNUSED, Cardinal *num_params _X_UNUSED)
  {
      ToggleWidget tw = (ToggleWidget)w;
@@ -547,7 +542,7 @@ index eb6281d..7c07aed 100644
      XtCallCallbacks(w, XtNcallback, (XtPointer)antilint);
  }
 diff --git a/src/Vendor.c b/src/Vendor.c
-index 7940d2e..e87deec 100644
+index 07faaa9..f8ede8b 100644
 --- a/src/Vendor.c
 +++ b/src/Vendor.c
 @@ -111,7 +111,7 @@ static XtResource resources[] = {
@@ -555,15 +550,15 @@ index 7940d2e..e87deec 100644
   ***************************************************************************/
  
 -#if defined(__CYGWIN__) || defined(__MINGW32__) || defined(__APPLE__)
-+#if defined(__CYGWIN__) || defined(__MINGW32__) && !defined(_MSC_VER)
++#if defined(__CYGWIN__) || defined(__MINGW32__) || defined(__APPLE__) && !defined(_MSC_VER)
  /* to fix the EditRes problem because of wrong linker semantics */
  extern WidgetClass vendorShellWidgetClass; /* from Xt/Vendor.c */
  extern VendorShellClassRec _XawVendorShellClassRec;
 diff --git a/src/Viewport.c b/src/Viewport.c
-index 9256ffa..22d7f0b 100644
+index 885e48d..6cad7d1 100644
 --- a/src/Viewport.c
 +++ b/src/Viewport.c
-@@ -809,7 +809,7 @@ ScrollUpDownProc(Widget widget, XtPointer closure, XtPointer call_data)
+@@ -807,7 +807,7 @@ ScrollUpDownProc(Widget widget, XtPointer closure, XtPointer call_data)
  {
      ViewportWidget w = (ViewportWidget)closure;
      Widget child = w->viewport.child;
@@ -573,10 +568,10 @@ index 9256ffa..22d7f0b 100644
  
      if (child == NULL)
 diff --git a/src/XawI18n.h b/src/XawI18n.h
-index d50171c..132bbb4 100644
+index 7d20bfc..86f2243 100644
 --- a/src/XawI18n.h
 +++ b/src/XawI18n.h
-@@ -62,6 +62,7 @@ int _Xaw_iswspace
+@@ -39,6 +39,7 @@ in this Software without prior written authorization from The Open Group.
  #endif
  
  #include <stdlib.h>
@@ -585,10 +580,10 @@ index d50171c..132bbb4 100644
  #ifdef USE_XWCHAR_STRING
  int _Xwcslen
 diff --git a/src/XawIm.c b/src/XawIm.c
-index ebc5ede..71c1433 100644
+index 5446c62..beead55 100644
 --- a/src/XawIm.c
 +++ b/src/XawIm.c
-@@ -196,7 +196,7 @@ SetExtPart(VendorShellWidget w, XawVendorShellExtWidget vew)
+@@ -208,7 +208,7 @@ SetExtPart(VendorShellWidget w, XawVendorShellExtWidget vew)
      contextData = XtNew(contextDataRec);
      contextData->parent = (Widget)w;
      contextData->ve = (Widget)vew;
@@ -597,7 +592,7 @@ index ebc5ede..71c1433 100644
  	return(NULL);
      }
      return(&(vew->vendor_ext));
-@@ -208,7 +208,7 @@ GetExtPart(VendorShellWidget w)
+@@ -220,7 +220,7 @@ GetExtPart(VendorShellWidget w)
      contextDataRec *contextData;
      XawVendorShellExtWidget vew;
  
@@ -606,7 +601,7 @@ index ebc5ede..71c1433 100644
  		      (XPointer*)&contextData)) {
  	return(NULL);
      }
-@@ -307,7 +307,7 @@ static Widget SetErrCnxt(Widget w, XIM xim)
+@@ -320,7 +320,7 @@ static Widget SetErrCnxt(Widget w, XIM xim)
      contextErrData = XtNew(contextErrDataRec);
      contextErrData->widget = w;
      contextErrData->xim = xim;
@@ -615,7 +610,7 @@ index ebc5ede..71c1433 100644
  	(char *)contextErrData)) {
  	return(NULL);
      }
-@@ -377,11 +377,11 @@ DestroyAllIM(XawVendorShellExtPart *ve)
+@@ -376,11 +376,11 @@ DestroyAllIM(XawVendorShellExtPart *ve)
      /*
       * Close Input Method
       */
@@ -629,7 +624,7 @@ index ebc5ede..71c1433 100644
      CloseIM(ve);
      ve->im.xim = NULL;
  
-@@ -401,11 +401,11 @@ FreeAllDataOfVendorShell(XawVendorShellExtPart *ve, VendorShellWidget vw)
+@@ -400,11 +400,11 @@ FreeAllDataOfVendorShell(XawVendorShellExtPart *ve, VendorShellWidget vw)
      XawIcTableList       p, next;
      contextErrDataRec *contextErrData;
  
@@ -643,103 +638,103 @@ index ebc5ede..71c1433 100644
      if (ve->ic.shared_ic_table)
          XtFree((char *)ve->ic.shared_ic_table);
      if (ve->im.resources) XtFree((char *)ve->im.resources);
-@@ -816,27 +816,27 @@ CreateIC(Widget w, XawVendorShellExtPart *ve)
+@@ -800,27 +800,27 @@ CreateIC(Widget w, XawVendorShellExtPart *ve)
  	}
  	if (p->flg & CIFg) {
- 	    pe_a[pe_cnt] = (XPointer) XNForeground; pe_cnt++;
--	    pe_a[pe_cnt] = (XPointer) p->foreground; pe_cnt++;
-+	    pe_a[pe_cnt] = (XPointer) (uintptr_t)p->foreground; pe_cnt++;
- 	    st_a[st_cnt] = (XPointer) XNForeground; st_cnt++;
--	    st_a[st_cnt] = (XPointer) p->foreground; st_cnt++;
-+	    st_a[st_cnt] = (XPointer) (uintptr_t)p->foreground; st_cnt++;
+ 	    ADD_PE(XNForeground);
+-	    ADD_PE(p->foreground);
++	    ADD_PE((uintptr_t)p->foreground);
+ 	    ADD_ST(XNForeground);
+-	    ADD_ST(p->foreground);
++	    ADD_ST((uintptr_t)p->foreground);
  	}
  	if (p->flg & CIBg) {
- 	    pe_a[pe_cnt] = (XPointer) XNBackground; pe_cnt++;
--	    pe_a[pe_cnt] = (XPointer) p->background; pe_cnt++;
-+	    pe_a[pe_cnt] = (XPointer) (uintptr_t)p->background; pe_cnt++;
- 	    st_a[st_cnt] = (XPointer) XNBackground; st_cnt++;
--	    st_a[st_cnt] = (XPointer) p->background; st_cnt++;
-+	    st_a[st_cnt] = (XPointer) (uintptr_t)p->background; st_cnt++;
+ 	    ADD_PE(XNBackground);
+-	    ADD_PE(p->background);
++	    ADD_PE((uintptr_t)p->background);
+ 	    ADD_ST(XNBackground);
+-	    ADD_ST(p->background);
++	    ADD_ST((uintptr_t)p->background);
  	}
  	if (p->flg & CIBgPixmap) {
- 	    pe_a[pe_cnt] = (XPointer) XNBackgroundPixmap; pe_cnt++;
--	    pe_a[pe_cnt] = (XPointer) p->bg_pixmap; pe_cnt++;
-+	    pe_a[pe_cnt] = (XPointer) (uintptr_t)p->bg_pixmap; pe_cnt++;
- 	    st_a[st_cnt] = (XPointer) XNBackgroundPixmap; st_cnt++;
--	    st_a[st_cnt] = (XPointer) p->bg_pixmap; st_cnt++;
-+	    st_a[st_cnt] = (XPointer) (uintptr_t)p->bg_pixmap; st_cnt++;
+ 	    ADD_PE(XNBackgroundPixmap);
+-	    ADD_PE(p->bg_pixmap);
++	    ADD_PE((uintptr_t)p->bg_pixmap);
+ 	    ADD_ST(XNBackgroundPixmap);
+-	    ADD_ST(p->bg_pixmap);
++	    ADD_ST((uintptr_t)p->bg_pixmap);
  	}
  	if (p->flg & CILineS) {
- 	    pe_a[pe_cnt] = (XPointer) XNLineSpace; pe_cnt++;
--	    pe_a[pe_cnt] = (XPointer) p->line_spacing; pe_cnt++;
-+	    pe_a[pe_cnt] = (XPointer) (uintptr_t)p->line_spacing; pe_cnt++;
- 	    st_a[st_cnt] = (XPointer) XNLineSpace; st_cnt++;
--	    st_a[st_cnt] = (XPointer) p->line_spacing; st_cnt++;
-+	    st_a[st_cnt] = (XPointer) (uintptr_t)p->line_spacing; st_cnt++;
+ 	    ADD_PE(XNLineSpace);
+-	    ADD_PE(p->line_spacing);
++	    ADD_PE((uintptr_t)p->line_spacing);
+ 	    ADD_ST(XNLineSpace);
+-	    ADD_ST(p->line_spacing);
++	    ADD_ST((uintptr_t)p->line_spacing);
  	}
      }
-     if (p->input_style & XIMPreeditArea) {
-@@ -877,11 +877,11 @@ CreateIC(Widget w, XawVendorShellExtPart *ve)
+ 
+@@ -865,11 +865,11 @@ CreateIC(Widget w, XawVendorShellExtPart *ve)
      }
  
-     ic_a[ic_cnt] = (XPointer) XNInputStyle; ic_cnt++;
--    ic_a[ic_cnt] = (XPointer) p->input_style; ic_cnt++;
-+    ic_a[ic_cnt] = (XPointer) (uintptr_t)p->input_style; ic_cnt++;
-     ic_a[ic_cnt] = (XPointer) XNClientWindow; ic_cnt++;
--    ic_a[ic_cnt] = (XPointer) XtWindow(ve->parent); ic_cnt++;
-+    ic_a[ic_cnt] = (XPointer) (uintptr_t)XtWindow(ve->parent); ic_cnt++;
-     ic_a[ic_cnt] = (XPointer) XNFocusWindow; ic_cnt++;
--    ic_a[ic_cnt] = (XPointer) XtWindow(w); ic_cnt++;
-+    ic_a[ic_cnt] = (XPointer) (uintptr_t)XtWindow(w); ic_cnt++;
+     ADD_IC(XNInputStyle);
+-    ADD_IC(p->input_style);
++    ADD_IC((uintptr_t)p->input_style);
+     ADD_IC(XNClientWindow);
+-    ADD_IC(XtWindow(ve->parent));
++    ADD_IC((uintptr_t)XtWindow(ve->parent));
+     ADD_IC(XNFocusWindow);
+-    ADD_IC(XtWindow(w));
++    ADD_IC((uintptr_t)XtWindow(w));
  
      if (pe_cnt > 0) {
- 	pe_a[pe_cnt] = (XPointer) NULL;
-@@ -975,27 +975,27 @@ SetICValues(Widget w, XawVendorShellExtPart *ve, Bool focus)
+ 	END_PE();
+@@ -962,27 +962,27 @@ SetICValues(Widget w, XawVendorShellExtPart *ve, Bool focus)
  	}
  	if (p->flg & CIFg) {
- 	    pe_a[pe_cnt] = (XPointer) XNForeground; pe_cnt++;
--	    pe_a[pe_cnt] = (XPointer) p->foreground; pe_cnt++;
-+	    pe_a[pe_cnt] = (XPointer) (uintptr_t)p->foreground; pe_cnt++;
- 	    st_a[st_cnt] = (XPointer) XNForeground; st_cnt++;
--	    st_a[st_cnt] = (XPointer) p->foreground; st_cnt++;
-+	    st_a[st_cnt] = (XPointer) (uintptr_t)p->foreground; st_cnt++;
+ 	    ADD_PE(XNForeground);
+-	    ADD_PE(p->foreground);
++	    ADD_PE((uintptr_t)p->foreground);
+ 	    ADD_ST(XNForeground);
+-	    ADD_ST(p->foreground);
++	    ADD_ST(uintptr_t)(p->foreground);
  	}
  	if (p->flg & CIBg) {
- 	    pe_a[pe_cnt] = (XPointer) XNBackground; pe_cnt++;
--	    pe_a[pe_cnt] = (XPointer) p->background; pe_cnt++;
-+	    pe_a[pe_cnt] = (XPointer) (uintptr_t)p->background; pe_cnt++;
- 	    st_a[st_cnt] = (XPointer) XNBackground; st_cnt++;
--	    st_a[st_cnt] = (XPointer) p->background; st_cnt++;
-+	    st_a[st_cnt] = (XPointer) (uintptr_t)p->background; st_cnt++;
+ 	    ADD_PE(XNBackground);
+-	    ADD_PE(p->background);
++	    ADD_PE((uintptr_t)p->background);
+ 	    ADD_ST(XNBackground);
+-	    ADD_ST(p->background);
++	    ADD_ST((uintptr_tp->background);
  	}
  	if (p->flg & CIBgPixmap) {
- 	    pe_a[pe_cnt] = (XPointer) XNBackgroundPixmap; pe_cnt++;
--	    pe_a[pe_cnt] = (XPointer) p->bg_pixmap; pe_cnt++;
-+	    pe_a[pe_cnt] = (XPointer) (uintptr_t)p->bg_pixmap; pe_cnt++;
- 	    st_a[st_cnt] = (XPointer) XNBackgroundPixmap; st_cnt++;
--	    st_a[st_cnt] = (XPointer) p->bg_pixmap; st_cnt++;
-+	    st_a[st_cnt] = (XPointer) (uintptr_t)p->bg_pixmap; st_cnt++;
+ 	    ADD_PE(XNBackgroundPixmap);
+-	    ADD_PE(p->bg_pixmap);
++	    ADD_PE((uintptr_t)p->bg_pixmap);
+ 	    ADD_ST(XNBackgroundPixmap);
+-	    ADD_ST(p->bg_pixmap);
++	    ADD_ST((uintptr_t)p->bg_pixmap);
  	}
  	if (p->flg & CILineS) {
- 	    pe_a[pe_cnt] = (XPointer) XNLineSpace; pe_cnt++;
--	    pe_a[pe_cnt] = (XPointer) p->line_spacing; pe_cnt++;
-+	    pe_a[pe_cnt] = (XPointer) (uintptr_t)p->line_spacing; pe_cnt++;
- 	    st_a[st_cnt] = (XPointer) XNLineSpace; st_cnt++;
--	    st_a[st_cnt] = (XPointer) p->line_spacing; st_cnt++;
-+	    st_a[st_cnt] = (XPointer) (uintptr_t)p->line_spacing; st_cnt++;
+ 	    ADD_PE(XNLineSpace);
+-	    ADD_PE(p->line_spacing);
++	    ADD_PE((uintptr_t)p->line_spacing);
+ 	    ADD_ST(XNLineSpace);
+-	    ADD_ST(p->line_spacing);
++	    ADD_ST((uintptr_t)p->line_spacing);
  	}
      }
      if (p->input_style & XIMPreeditPosition) {
-@@ -1043,7 +1043,7 @@ SetICValues(Widget w, XawVendorShellExtPart *ve, Bool focus)
+@@ -1029,7 +1029,7 @@ SetICValues(Widget w, XawVendorShellExtPart *ve, Bool focus)
      }
      if (focus == TRUE) {
- 	ic_a[ic_cnt] = (XPointer) XNFocusWindow; ic_cnt++;
--	ic_a[ic_cnt] = (XPointer) XtWindow(w); ic_cnt++;
-+	ic_a[ic_cnt] = (XPointer) (uintptr_t)XtWindow(w); ic_cnt++;
+ 	ADD_IC(XNFocusWindow);
+-	ADD_IC(XtWindow(w));
++	ADD_IC((uintptr_t)XtWindow(w));
      }
      if (ic_cnt > 0) {
- 	ic_a[ic_cnt] = (XPointer) NULL;
-@@ -1409,12 +1409,12 @@ Destroy(Widget w, XawVendorShellExtPart *ve)
+ 	END_IC();
+@@ -1395,12 +1395,12 @@ Destroy(Widget w, XawVendorShellExtPart *ve)
      XtFree( (char*) ve->im.resources );
  
      if (extContext != (XContext)0 &&
