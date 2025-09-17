@@ -280,7 +280,7 @@ index 6bb2465..13227eb 100644
  	.graphics_exposures = False,
  
 diff --git a/src/MultiSrc.c b/src/MultiSrc.c
-index 5d23396..da0aff3 100644
+index 5d23396..a97ea64 100644
 --- a/src/MultiSrc.c
 +++ b/src/MultiSrc.c
 @@ -1256,7 +1256,7 @@ InitStringOrFile(MultiSrcObject src, Bool newString)
@@ -288,7 +288,7 @@ index 5d23396..da0aff3 100644
      if (!src->multi_src.is_tempfile) {
  	if ((fd = open((char *)src->multi_src.string, (int)open_mode, 0666)) != -1) {
 -	    if ((file = fdopen(fd, fdopen_mode)) != NULL) {
-+	    if ((file = fdopen(fd, _fdopen_mode)) != NULL) {
++	    if ((file = _fdopen(fd, fdopen_mode)) != NULL) {
  		(void)fseek(file, 0, SEEK_END);
  		src->multi_src.length = (XawTextPosition)ftell(file);
  		return(file);
