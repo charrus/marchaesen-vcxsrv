@@ -1,20 +1,26 @@
 diff --git a/src/Actions.c b/src/Actions.c
-index abb61ef..8202a4d 100644
+index abb61ef..1048249 100644
 --- a/src/Actions.c
 +++ b/src/Actions.c
-@@ -159,9 +159,9 @@ XawParseBoolean(Widget w, String param, XEvent *event, Bool *succeed)
-       double dd = strtod(param, &tmp);
-       int value = (int) dd;
+@@ -151,13 +151,15 @@ static Cardinal num_variable_list;
+ Bool
+ XawParseBoolean(Widget w, String param, XEvent *event, Bool *succeed)
+ {
++  char *tmp = (char *)param;
++  int value;
++  double dd = strtod(param, &tmp);
++
+   if (!param)
+     return (False);
+   else
+     {
+-      char *tmp = (char *)param;
+-      double dd = strtod(param, &tmp);
+-      int value = (int) dd;
++      value = (int) dd;
  
--      if (*tmp == '\0')
--        return (value);
--    }
-+  value = (int)strtod(param, &tmp);
-+  if (*tmp == '\0')
-+    return (value);
- 
-   if (XmuCompareISOLatin1(param, "true") == 0
-       || XmuCompareISOLatin1(param, "yes") == 0
+       if (*tmp == '\0')
+         return (value);
 diff --git a/src/AsciiSink.c b/src/AsciiSink.c
 index 1736a76..cda6f37 100644
 --- a/src/AsciiSink.c
