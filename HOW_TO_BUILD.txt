@@ -30,6 +30,10 @@ Run:
 
 in WSL to install prerequisites.
 
+Initialise submodules with:
+
+./prebuild.sh
+
 Then kick off a build with:
 
 ./buildall.sh 1 8 [RDA] - Pick on of: D = Debug build, R = Release build, A = Both debug and release.
@@ -59,9 +63,13 @@ Docker builds
 	cygwin
 	cd /mnt/c/vcx
 
+Initialise submodules with:
+
+        ./prebuild.sh
+
 Now you can kick off a build:
 
-        buildall.sh <32/64-bit flag> <build tasks> <Debug/Release flag> [Build deps flag]
+        ./buildall.sh <32/64-bit flag> <build tasks> <Debug/Release flag> [Build deps flag]
 
 Where:
   - 32/64-bit flag - 1=64-bit, 0=32-bit
