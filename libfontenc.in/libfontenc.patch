@@ -1,0 +1,24 @@
+diff --git a/src/encparse.c b/src/encparse.c
+index bf9ea23..fffaea7 100644
+--- a/src/encparse.c
++++ b/src/encparse.c
+@@ -36,6 +36,7 @@ THE SOFTWARE.
+ #include <stdio.h>
+ 
+ #include <stdlib.h>
++#include <unistd.h>
+ 
+ #include <fcntl.h>
+ #ifdef O_CLOEXEC
+diff --git a/src/fontenc.c b/src/fontenc.c
+index d0a43e8..474da71 100644
+--- a/src/fontenc.c
++++ b/src/fontenc.c
+@@ -29,6 +29,7 @@ THE SOFTWARE.
+ #include <string.h>
+ #include <strings.h>
+ #include <stdlib.h>
++#include <unistd.h>
+ 
+ #define FALSE 0
+ #define TRUE 1

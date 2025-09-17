@@ -34,3 +34,6 @@
 [submodule "libXaw"]
 	path = libXaw
 	url = https://gitlab.freedesktop.org/xorg/lib/libxaw.git
+[submodule "libfontenc"]
+	path = libfontenc
+	url = https://gitlab.freedesktop.org/xorg/lib/libfontenc.git
