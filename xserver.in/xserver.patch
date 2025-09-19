@@ -2772,7 +2772,7 @@ index 6c70ab4ba..4be445f1d 100644
          if (rc == Success)
              memcpy((char *) &ke.map[0], (char *) &keybd->key->down[1], 31);
 +        else
-+            memset((char *) &ke.map[0], 0, 31);        
++            memset((char *) &ke.map[0], 0, 31);
 +
 +        ke.type = KeymapNotify;
  
@@ -7068,7 +7068,7 @@ index 7a03bfb91..65c36415d 100644
          if (size && size < sizeof(buffer)) {
              snprintf(buffer + size, sizeof(buffer) - size,
 -                     "XWin.%s.log", display);
-+                    "VCXSrv.%s.log", display); 
++                    "VCXSrv.%s.log", display);
              buffer[sizeof(buffer) - 1] = 0;
              g_pszLogFile = buffer;
 -            winMsg(X_DEFAULT, "Logfile set to \"%s\"\n", g_pszLogFile);
@@ -9092,7 +9092,7 @@ index f9cb92cdd..36fe8bb20 100644
 +
 +extern void winPropertyStoreDestroy(void);
 +
-+static const char * 
++static const char *
 +RemoveWhitespaceAndTruncate(HWND hWnd, const char *AppID)
 +{
 +    const char *p=AppID;
@@ -10331,7 +10331,7 @@ index 4f16b21e0..3c992d697 100644
              }
              free(s);
 -            winMsg(X_CONFIG, "AutoRepeat: %ld %ld\n",
-+            winDebug ("AutoRepeat: %ld %ld\n", 
++            winDebug ("AutoRepeat: %ld %ld\n",
                     g_winInfo.keyboard.delay, g_winInfo.keyboard.rate);
          }
  #endif
@@ -10765,7 +10765,7 @@ index 3fc050bfa..6d243cdb8 100644
      uint32_t *lpBits;
  
 -    WIN_DEBUG_MSG("winLoadCursor: Win32: %dx%d X11: %dx%d hotspot: %d,%d\n",
-+    winDebug("winLoadCursor: Win32: %dx%d X11: %dx%d hotspot: %d,%d\n", 
++    winDebug("winLoadCursor: Win32: %dx%d X11: %dx%d hotspot: %d,%d\n",
                    pScreenPriv->cursor.sm_cx, pScreenPriv->cursor.sm_cy,
                    pCursor->bits->width, pCursor->bits->height,
                    pCursor->bits->xhot, pCursor->bits->yhot);
@@ -10783,7 +10783,7 @@ index 3fc050bfa..6d243cdb8 100644
          RGBQUAD *pbmiColors;
          /* Bicolor, use a palettized DIB */
 -        WIN_DEBUG_MSG("winLoadCursor: Trying two color cursor\n");
-+        winDebug("winLoadCursor: Trying two color cursor\n"); 
++        winDebug("winLoadCursor: Trying two color cursor\n");
          pbmi = (BITMAPINFO *) &bi;
          pbmiColors = &(pbmi->bmiColors[0]);
  
@@ -10833,7 +10833,7 @@ index 3fc050bfa..6d243cdb8 100644
  
      winScreenPriv(pScreen);
 -    WIN_DEBUG_MSG("winSetCursor: cursor=%p\n", pCursor);
-+    winDebug("winSetCursor: cursor=%p\n", pCursor); 
++    winDebug("winSetCursor: cursor=%p\n", pCursor);
  
      /* Inhibit changing the cursor if the mouse is not in a client area */
      bInhibit = FALSE;
@@ -10842,7 +10842,7 @@ index 3fc050bfa..6d243cdb8 100644
          pScreenPriv->cursor.handle =
              winLoadCursor(pScreen, pCursor, pScreen->myNum);
 -        WIN_DEBUG_MSG("winSetCursor: handle=%p\n", pScreenPriv->cursor.handle);
-+        winDebug("winSetCursor: handle=%p\n", pScreenPriv->cursor.handle); 
++        winDebug("winSetCursor: handle=%p\n", pScreenPriv->cursor.handle);
  
          if (!bInhibit)
              SetCursor(pScreenPriv->cursor.handle);
@@ -11238,8 +11238,8 @@ index 00586c25b..09fa3a3d4 100644
  
 +    {
 +        /* Make sure the message queue is empty, otherwise the GetKeyState will not always
-+          return the correct state of the numlock key, capslock key, ... 
-+          This is mainly because this function is called from the WM_SETFOCUS handler. 
++          return the correct state of the numlock key, capslock key, ...
++          This is mainly because this function is called from the WM_SETFOCUS handler.
 +          From MSDN GetKeyState: The key status returned from this function changes as a thread
 +          reads key messages from its message queue.*/
 +        MSG msg;
@@ -11440,12 +11440,12 @@ index 2ee48ce5a..96fb1995a 100644
                         MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
                         (LPTSTR) &buffer, 0, NULL)) {
 -        winErrorFVerb(verb, "Unknown error in FormatMessage!\n");
-+        ErrorF(msg); 
-+        ErrorF("Unknown error in FormatMessage!\n"); 
++        ErrorF(msg);
++        ErrorF("Unknown error in FormatMessage!\n");
      }
      else {
 -        winErrorFVerb(verb, "%s %s", msg, (char *) buffer);
-+        ErrorF("%s %s", msg, (char *)buffer); 
++        ErrorF("%s %s", msg, (char *)buffer);
          LocalFree(buffer);
      }
  }
@@ -12020,7 +12020,7 @@ index 5b9b74e3d..759903d52 100644
 -       desktop, check if the window will end up with its top-left corner on any
 -       monitor
 -    */
-+     make sure the window actually ends up somewhere where it will be visible 
++     make sure the window actually ends up somewhere where it will be visible
 +     Dont't do it by making just one of the two iX and iY CW_USEDEFAULT since
 +     this will create a window at place CW_USEDEFAULT which is 0x80000000 */
      if (pWin->drawable.class != InputOnly) {
@@ -12156,7 +12156,7 @@ index 5b9b74e3d..759903d52 100644
  #endif
  
 -    /* Process all messages on our queue */
-+    /* Process all messages on our queue 
++    /* Process all messages on our queue
      while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
          if (g_hDlgDepthChange == 0 || !IsDialogMessage(g_hDlgDepthChange, &msg)) {
              DispatchMessage(&msg);
@@ -15084,7 +15084,7 @@ index ae6bc12a6..2db47363a 100644
 +#ifdef WINDBG
      else
 -        winErrorFVerb(2, "winScreenInit - Using software cursor\n");
-+        winDebug("winScreenInit - Using software cursor\n");  
++        winDebug("winScreenInit - Using software cursor\n");
 +#endif
  
      if (!noPanoramiXExtension) {
@@ -16019,7 +16019,7 @@ index 5d1e6aefa..b68857b5e 100644
 +                 "%s - %s:%s.%d - %d clients",
 +	               g_pszQueryHost,
 +	               HostName,
-+                 display, 
++                 display,
 +                 (int) pScreenInfo->dwScreen,
 +                 pScreenPriv->iConnectedClients);
 +    }
@@ -16029,7 +16029,7 @@ index 5d1e6aefa..b68857b5e 100644
 +                  sizeof (nid.szTip),
 +                  "%s:%s.%d - %d clients",
 +                  HostName,
-+                  display, 
++                  display,
 +                  (int) pScreenInfo->dwScreen,
 +                  pScreenPriv->iConnectedClients);
 +    }
