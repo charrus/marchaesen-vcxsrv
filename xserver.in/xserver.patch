@@ -639,7 +639,7 @@ index 7c6684996..b1ce07d03 100644
 +    rep.nEvents = 0;
 +    rep.axes = axes;
 +    rep.mode = Absolute;        /* XXX we don't do relative at the moment */
-+    
++
      start = ClientTimeToServerTime(stuff->start);
      stop = ClientTimeToServerTime(stuff->stop);
      if (CompareTimeStamps(start, stop) == LATER ||
@@ -1055,7 +1055,7 @@ index d315f04d0..969014957 100644
 +    xi2.time = currentTime.milliseconds;
 +    xi2.property = property;
 +    xi2.what = what;
-+    
++
  
      SendEventToAllWindows(dev, DevicePropertyNotifyMask, (xEvent *) &event, 1);
  
@@ -1583,7 +1583,7 @@ index 5f6d32e53..ac59ab049 100644
 +    rep.success = MappingSuccess;
 +    rep.sequenceNumber = client->sequence;
 +    rep.length = 0;
-+    
++
      map = (BYTE *) &stuff[1];
  
      /* So we're bounded here by the number of core buttons.  This check
@@ -1661,7 +1661,7 @@ index 5f6d32e53..ac59ab049 100644
 +    rep.bellPercent = ctrl->bell;
 +    rep.bellPitch = ctrl->bell_pitch;
 +    rep.bellDuration = ctrl->bell_duration;
-+    
++
      for (i = 0; i < 32; i++)
          rep.map[i] = ctrl->autoRepeats[i];
      WriteReplyToClient(client, sizeof(xGetKeyboardControlReply), &rep);
@@ -1684,7 +1684,7 @@ index 5f6d32e53..ac59ab049 100644
 +    rep.accelNumerator = ctrl->num;
 +    rep.accelDenominator = ctrl->den;
 +    rep.threshold = ctrl->threshold;
-+    
++
      WriteReplyToClient(client, sizeof(xGenericReply), &rep);
      return Success;
  }
@@ -1699,7 +1699,7 @@ index 5f6d32e53..ac59ab049 100644
 +
 +    rep.type = X_Reply;
 +    rep.sequenceNumber = client->sequence;
-+    
++
      nEvents = 0;
      start = ClientTimeToServerTime(stuff->start);
      stop = ClientTimeToServerTime(stuff->stop);
@@ -1813,7 +1813,7 @@ index 15e63e22a..0021929e1 100644
 +                return;
 +            }
 +        }
-+ 
++
         /*****************
  	*  Handle events in round robin fashion, doing input between
  	*  each round
@@ -2161,7 +2161,7 @@ index 15e63e22a..0021929e1 100644
 +        acpr.type = X_Reply;
 +        acpr.sequenceNumber = client->sequence;
 +        acpr.nPixels = npixels;
-+        
++
          length = (long) npixels *sizeof(Pixel);
  
          ppixels = malloc(length);
@@ -2180,7 +2180,7 @@ index 15e63e22a..0021929e1 100644
 +        qcr.sequenceNumber = client->sequence;
 +        qcr.length = bytes_to_int32(count * sizeof(xrgb));
 +        qcr.nColors = count;
-+        
++
          WriteReplyToClient(client, sizeof(xQueryColorsReply), &qcr);
          if (count) {
              client->pSwapReplyFunc = (ReplySwapPtr) SQColorsExtend;
@@ -2229,7 +2229,7 @@ index 15e63e22a..0021929e1 100644
 +    reply.length = 0;
 +    reply.width = stuff->width;
 +    reply.height = stuff->height;
-+    
++
      WriteReplyToClient(client, sizeof(xQueryBestSizeReply), &reply);
      return Success;
  }
@@ -2254,7 +2254,7 @@ index 15e63e22a..0021929e1 100644
 +    rep.interval = ScreenSaverInterval / MILLI_PER_SECOND;
 +    rep.preferBlanking = ScreenSaverBlanking;
 +    rep.allowExposures = ScreenSaverAllowExposures;
-+    
++
      WriteReplyToClient(client, sizeof(xGetScreenSaverReply), &rep);
      return Success;
  }
@@ -2269,13 +2269,13 @@ index 15e63e22a..0021929e1 100644
 -        .length = bytes_to_int32(len),
 -        .nHosts = nHosts
 -    };
-+    
++
 +    reply.type = X_Reply;
 +    reply.enabled = enabled;
 +    reply.sequenceNumber = client->sequence;
 +    reply.length = bytes_to_int32(len);
 +    reply.nHosts = nHosts;
-+    
++
      WriteReplyToClient(client, sizeof(xListHostsReply), &reply);
      if (nHosts) {
          client->pSwapReplyFunc = (ReplySwapPtr) SLHostsExtend;
@@ -2900,7 +2900,7 @@ index 6c70ab4ba..4be445f1d 100644
 +    rep.rootX = pSprite->hot.x;
 +    rep.rootY = pSprite->hot.y;
 +    rep.child = None;
-+    
++
      if (pSprite->hot.pScreen == pWin->drawable.pScreen) {
          rep.sameScreen = xTrue;
          rep.winX = pSprite->hot.x - pWin->drawable.x;
@@ -2991,7 +2991,7 @@ index 9c158ba93..3546646dd 100644
 +    reply.nExtensions = 0;
 +    reply.sequenceNumber = client->sequence;
 +    reply.length = 0;
-+    
++
      buffer = NULL;
  
      if (NumExtensions) {
@@ -3078,7 +3078,7 @@ index 32bafe285..438d87bc0 100644
  {
 -    struct pixman_f_vector p = {.v = {*x, *y, 1} };
 +    struct pixman_f_vector p;
-+    
++
 +    p.v[0] = *x;
 +    p.v[1] = *y;
 +    p.v[2] = 1;
@@ -3158,13 +3158,13 @@ index 38e29cebb..1918b08c9 100644
 -
 +    #ifdef _DEBUG
 +    //int TmpFlag=_CrtSetDbgFlag( _CRTDBG_REPORT_FLAG);
-+    
++
 +    //TmpFlag|=_CRTDBG_ALLOC_MEM_DF;
 +    //TmpFlag|=_CRTDBG_DELAY_FREE_MEM_DF;
 +    //TmpFlag|=_CRTDBG_CHECK_ALWAYS_DF;
 +    //TmpFlag|=_CRTDBG_CHECK_CRT_DF;
 +    //TmpFlag|=_CRTDBG_LEAK_CHECK_DF;
-+    
++
 +    //_CrtSetDbgFlag(TmpFlag);
 +    #endif
 +
@@ -3481,7 +3481,7 @@ index 3eca8615a..b77a6cb6f 100644
 +    xlpr.sequenceNumber = client->sequence;
 +    xlpr.length = bytes_to_int32(numProps * sizeof(Atom));
 +    xlpr.nProperties = numProps;
-+    
++
      WriteReplyToClient(client, sizeof(xGenericReply), &xlpr);
      if (numProps) {
          client->pSwapReplyFunc = (ReplySwapPtr) Swap32Write;
@@ -3641,7 +3641,7 @@ index cd917f006..eed1e7472 100644
 +        event.u.createNotify.height = h;
 +        event.u.createNotify.borderWidth = bw;
 +        event.u.createNotify.override = pWin->overrideRedirect;
-+        
++
          event.u.u.type = CreateNotify;
          DeliverEvents(pParent, &event, 1, NullWindow);
      }
@@ -3682,7 +3682,7 @@ index cd917f006..eed1e7472 100644
 +                xE.u.colormap.colormap = cmap;
 +                xE.u.colormap.new = xTrue;
 +                xE.u.colormap.state = IsMapInstalled(cmap, pWin);
-+                
++
                  xE.u.u.type = ColormapNotify;
                  DeliverEvents(pWin, &xE, 1, NullWindow);
              }
@@ -3699,7 +3699,7 @@ index cd917f006..eed1e7472 100644
 +                event.u.gravity.window = pSib->drawable.id;
 +                event.u.gravity.x = cwsx - wBorderWidth(pSib);
 +                event.u.gravity.y = cwsy - wBorderWidth(pSib);
-+                
++
                  event.u.u.type = GravityNotify;
                  DeliverEvents(pSib, &event, 1, NullWindow);
                  pSib->origin.x = cwsx;
@@ -3745,7 +3745,7 @@ index cd917f006..eed1e7472 100644
 +            eventT.u.resizeRequest.window = pWin->drawable.id;
 +            eventT.u.resizeRequest.width = w;
 +            eventT.u.resizeRequest.height = h;
-+            
++
              eventT.u.u.type = ResizeRequest;
              if (MaybeDeliverEventsToClient(pWin, &eventT, 1,
                                             ResizeRedirectMask, client) == 1) {
@@ -3772,7 +3772,7 @@ index cd917f006..eed1e7472 100644
 +        event.u.configureNotify.height = h;
 +        event.u.configureNotify.borderWidth = bw;
 +        event.u.configureNotify.override = pWin->overrideRedirect;
-+        
++
          event.u.u.type = ConfigureNotify;
  #ifdef PANORAMIX
          if (!noPanoramiXExtension && (!pParent || !pParent->parent)) {
@@ -3813,7 +3813,7 @@ index cd917f006..eed1e7472 100644
 +    event.u.reparent.x = x;
 +    event.u.reparent.y = y;
 +    event.u.reparent.override = pWin->overrideRedirect;
-+    
++
      event.u.u.type = ReparentNotify;
  #ifdef PANORAMIX
      if (!noPanoramiXExtension && !pParent->parent) {
@@ -3873,7 +3873,7 @@ index cd917f006..eed1e7472 100644
 +    memset(&event, 0, sizeof(xEvent));
 +    event.u.visibility.window = pWin->drawable.id;
 +    event.u.visibility.state = visibility;
-+    
++
      event.u.u.type = VisibilityNotify;
      DeliverEvents(pWin, &event, 1, NullWindow);
  }
@@ -8311,7 +8311,7 @@ index ff015f763..fc10135f3 100644
      if (gc->ctx == NULL) {
 +        glxWinReleaseDC(hwnd, gc->hDC, draw);
 +        gc->hDC=0;
-+      
++
          ErrorF("wglCreateContext error: %s\n", glxWinErrorMessage());
          return;
      }
@@ -11483,7 +11483,7 @@ index 02f672f08..55eba368f 100644
 -void
 -winDrvMsg(int scrnIndex, MessageType type, const char *format, ...)
 -_X_ATTRIBUTE_PRINTF(3, 4);
-+ 
++
 +#include "os.h"
 +
 +#if !defined(_MSC_VER) || defined(_DEBUG)
@@ -15031,7 +15031,7 @@ index ae6bc12a6..2db47363a 100644
      dwInitialBPP = pScreenInfo->dwBPP;
 -
 -    if (!(*pScreenPriv->pwinAdjustVideoMode) (pScreen)) {
-+  
++
 +    if (pScreenPriv->pwinAdjustVideoMode && !(*pScreenPriv->pwinAdjustVideoMode) (pScreen)) {
          ErrorF("winScreenInit - winAdjustVideoMode () failed\n");
          return FALSE;
@@ -15212,9 +15212,9 @@ index 290176920..5dd7ff6c5 100644
 +      /* Surface was lost */
 +      ErrorF ("IDirectDrawSurface4_Blt reported that the primary "
 +              "surface was lost, trying to restore, retry: %d\n", i + 1);
-+    
++
 +      /* Try to restore the surface, once */
-+      
++
 +      if (i==1)
 +      {
 +        ErrorF("Recreating DDraw surface because restoring of surface didn't work.\n");
@@ -15355,7 +15355,7 @@ index 290176920..5dd7ff6c5 100644
 +    {
 +        ErrorF("winAllocateFBShadowDDNL calling for the second time, reallocating\n");
 +        lpSurface=pScreenInfo->pfb;
-+ 
++
 +        if (pScreenPriv->pddsShadow4)
 +        {
 +            IDirectDrawSurface4_Release (pScreenPriv->pddsShadow4);
@@ -15372,7 +15372,7 @@ index 290176920..5dd7ff6c5 100644
 +            ErrorF ("winAllocateFBShadowDDNL - Could not allocate bits\n");
 +            return FALSE;
 +        }
-+  
++
      }
  
      /*
@@ -16551,7 +16551,7 @@ index c7950880f..0f32e7e96 100644
 -            ((wParam & 0xfff0) == SC_MAXIMIZE ||
 -             (wParam & 0xfff0) == SC_RESTORE))
 -            PostMessage(hwnd, WM_EXITSIZEMOVE, 0, 0);
-+      
++
 +      case WM_SYSCOMMAND:
 +          if ((wParam & 0xfff0) == SC_MAXIMIZE ||
 +              (wParam & 0xfff0) == SC_RESTORE)
@@ -18787,7 +18787,7 @@ index 093e30096..3688ffbb7 100644
 +  }
 +
 +  DisplayXdmcpHostsDialog();  /* Display the dialog if not already displayed */
-+  
++
 +  HostIdx=XdmcpHostAddName(szHostName, g_NrHosts);
 +  if (HostIdx==-1)
 +  {
@@ -19251,7 +19251,7 @@ index 5131bfcdf..cdd89f839 100644
 -        .axtCtrlsValues = xkb->axt_ctrls_values,
 -        .enabledCtrls = xkb->enabled_ctrls,
 -    };
-+    
++
 +    rep.type = X_Reply;
 +    rep.deviceID = ((DeviceIntPtr) dev)->id;
 +    rep.sequenceNumber = client->sequence;
@@ -19282,7 +19282,7 @@ index 5131bfcdf..cdd89f839 100644
 +    rep.axtCtrlsMask = xkb->axt_ctrls_mask;
 +    rep.axtCtrlsValues = xkb->axt_ctrls_values;
 +    rep.enabledCtrls = xkb->enabled_ctrls;
-+    
++
      memcpy(rep.perKeyRepeat, xkb->per_key_repeat, XkbPerKeyBitArraySize);
      if (client->swapped) {
          swaps(&rep.sequenceNumber);
@@ -19371,7 +19371,7 @@ index 5131bfcdf..cdd89f839 100644
 +    rep.sequenceNumber = client->sequence;
 +    rep.length = 0;
 +    rep.which = stuff->which;
-+    
++
      XkbComputeGetIndicatorMapReplySize(leds, &rep);
      return XkbSendIndicatorMap(client, leds, &rep);
  }
@@ -19392,7 +19392,7 @@ index 5131bfcdf..cdd89f839 100644
 +    rep.length = 0;
 +    rep.deviceID = dev->id;
 +    rep.indicator = stuff->indicator;
-+    
++
      if (map != NULL) {
          rep.found = TRUE;
          rep.on = ((sli->effectiveState & (1 << i)) != 0);
@@ -19423,7 +19423,7 @@ index 5131bfcdf..cdd89f839 100644
 +    rep.nKeys = XkbNumKeys(xkb);
 +    rep.nKeyAliases = xkb->names ? xkb->names->num_key_aliases : 0;
 +    rep.nRadioGroups = xkb->names ? xkb->names->num_rg : 0;
-+    
++
      XkbComputeGetNamesReplySize(xkb, &rep);
      return XkbSendNames(client, xkb, &rep);
  }
@@ -19509,7 +19509,7 @@ index 5131bfcdf..cdd89f839 100644
          return BadAccess;
  
 +    memset(&mrep,0,sizeof(mrep));  //MH
-+    
++
      CHK_KBD_DEVICE(dev, stuff->deviceSpec, client, access_mode);
      master = GetMaster(dev, MASTER_KEYBOARD);
  
