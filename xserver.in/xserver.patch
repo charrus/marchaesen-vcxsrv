@@ -9561,6 +9561,7 @@ index 0e60c1b24..9b62bed4a 100644
 +  TerminateProcess(GetCurrentProcess(),1);
  }
 +
++
 diff --git a/hw/xwin/winclipboard/winclipboard.h b/hw/xwin/winclipboard/winclipboard.h
 index 243aa24dc..4d174c1aa 100644
 --- a/hw/xwin/winclipboard/winclipboard.h
@@ -9883,6 +9884,7 @@ index dbce0bc17..2593330bc 100644
 +        winDebug("winClipboardShutdown - Clipboard thread has exited.\n");
 +    }
  }
++
 diff --git a/hw/xwin/winclipboardwrappers.c b/hw/xwin/winclipboardwrappers.c
 index 2e6b63287..cf0d5f951 100644
 --- a/hw/xwin/winclipboardwrappers.c
