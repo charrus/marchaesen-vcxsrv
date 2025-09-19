@@ -1,3 +1,37 @@
+diff --git a/Xext/bigreq.c b/Xext/bigreq.c
+index c78a1e4b4..25ed7dcaa 100644
+--- a/Xext/bigreq.c
++++ b/Xext/bigreq.c
+@@ -26,17 +26,16 @@ from The Open Group.
+ 
+ */
+ 
+-#ifdef HAVE_DIX_CONFIG_H
+ #include <dix-config.h>
+-#endif
+ 
+ #include <X11/X.h>
+ #include <X11/Xproto.h>
++#include <X11/extensions/bigreqsproto.h>
++
+ #include "misc.h"
+ #include "os.h"
+ #include "dixstruct.h"
+ #include "extnsionst.h"
+-#include <X11/extensions/bigreqsproto.h>
+ #include "opaque.h"
+ #include "extinit.h"
+ 
+@@ -46,9 +45,6 @@ ProcBigReqDispatch(ClientPtr client)
+     REQUEST(xBigReqEnableReq);
+     xBigReqEnableReply rep;
+ 
+-    if (client->swapped) {
+-        swaps(&stuff->length);
+-    }
+     if (stuff->brReqType != X_BigReqEnable)
+         return BadRequest;
+     REQUEST_SIZE_MATCH(xBigReqEnableReq);
 diff --git a/Xext/hashtable.c b/Xext/hashtable.c
 index 3434c9948..ba6370475 100644
 --- a/Xext/hashtable.c
@@ -615,7 +649,7 @@ index e856fa82c..306e6fb61 100644
  
      ret = GrabKey(client, dev, mdev, stuff->key, &param, XI, &mask);
 diff --git a/Xi/gtmotion.c b/Xi/gtmotion.c
-index 7c6684996..b1ce07d03 100644
+index 7c6684996..2da2fab03 100644
 --- a/Xi/gtmotion.c
 +++ b/Xi/gtmotion.c
 @@ -110,15 +110,15 @@ ProcXGetDeviceMotionEvents(ClientPtr client)
@@ -1015,7 +1049,7 @@ index 896233bec..f3cbc30a6 100644
          dev = inputInfo.all_devices;
      else if (stuff->deviceid == XIAllMasterDevices)
 diff --git a/Xi/xiproperty.c b/Xi/xiproperty.c
-index d315f04d0..969014957 100644
+index d315f04d0..f17b2d975 100644
 --- a/Xi/xiproperty.c
 +++ b/Xi/xiproperty.c
 @@ -185,23 +185,23 @@ static void
@@ -1492,7 +1526,7 @@ index b5b34d656..fc785195a 100644
          DeliverEvents(pwin, &xE, 1, (WindowPtr) NULL);
      }
 diff --git a/dix/devices.c b/dix/devices.c
-index 5f6d32e53..ac59ab049 100644
+index 5f6d32e53..77d4a3ca0 100644
 --- a/dix/devices.c
 +++ b/dix/devices.c
 @@ -332,7 +332,7 @@ AddInputDevice(ClientPtr client, DeviceProc deviceProc, Bool autoStart)
@@ -1742,7 +1776,7 @@ index 5f6d32e53..ac59ab049 100644
          master->button->numButtons = maxbuttons;
          if (last_num_buttons < maxbuttons) {
 diff --git a/dix/dispatch.c b/dix/dispatch.c
-index 15e63e22a..0021929e1 100644
+index 15e63e22a..3982b97de 100644
 --- a/dix/dispatch.c
 +++ b/dix/dispatch.c
 @@ -101,6 +101,10 @@ Equipment Corporation.
@@ -1798,7 +1832,6 @@ index 15e63e22a..0021929e1 100644
  
 -        if (!WaitForSomething(clients_are_ready()))
 -            continue;
--
 +        if (wait)
 +        {
 +            if (!WaitForSomething(clients_are_ready()))
@@ -1813,7 +1846,7 @@ index 15e63e22a..0021929e1 100644
 +                return;
 +            }
 +        }
-+
+ 
         /*****************
  	*  Handle events in round robin fashion, doing input between
  	*  each round
@@ -2656,7 +2689,7 @@ index 8e830c59a..3dc30a1dc 100644
          EventSetKeyRepeatFlag(core, (e->type == ET_KeyPress && e->key_repeat));
          ret = Success;
 diff --git a/dix/events.c b/dix/events.c
-index 6c70ab4ba..4be445f1d 100644
+index 6c70ab4ba..c885cbb6d 100644
 --- a/dix/events.c
 +++ b/dix/events.c
 @@ -697,15 +697,15 @@ ConfineToShape(DeviceIntPtr pDev, RegionPtr shape, int *px, int *py)
@@ -2955,7 +2988,7 @@ index 6c70ab4ba..4be445f1d 100644
      mask.core = stuff->eventMask;
  
 diff --git a/dix/extension.c b/dix/extension.c
-index 9c158ba93..3546646dd 100644
+index 9c158ba93..e76ee5ed3 100644
 --- a/dix/extension.c
 +++ b/dix/extension.c
 @@ -230,12 +230,11 @@ ProcQueryExtension(ClientPtr client)
@@ -3042,7 +3075,7 @@ index 0e5de5bd4..37e832de1 100644
          case GCClipMask:
              NEXT_PTR(PixmapPtr, pPixmap);
 diff --git a/dix/getevents.c b/dix/getevents.c
-index 32bafe285..438d87bc0 100644
+index 32bafe285..263cb662e 100644
 --- a/dix/getevents.c
 +++ b/dix/getevents.c
 @@ -70,6 +70,17 @@
@@ -3137,7 +3170,7 @@ index 9026f651b..710b9d685 100644
      SendEventToAllWindows(dev, DeviceMappingNotifyMask, (xEvent *) &xi_mn, 1);
  }
 diff --git a/dix/main.c b/dix/main.c
-index 38e29cebb..1918b08c9 100644
+index 38e29cebb..1c9c78db7 100644
 --- a/dix/main.c
 +++ b/dix/main.c
 @@ -117,6 +117,10 @@ Equipment Corporation.
@@ -3155,7 +3188,6 @@ index 38e29cebb..1918b08c9 100644
  {
      int i;
      HWEventQueueType alwaysCheckForInput[2];
--
 +    #ifdef _DEBUG
 +    //int TmpFlag=_CrtSetDbgFlag( _CRTDBG_REPORT_FLAG);
 +
@@ -3164,7 +3196,7 @@ index 38e29cebb..1918b08c9 100644
 +    //TmpFlag|=_CRTDBG_CHECK_ALWAYS_DF;
 +    //TmpFlag|=_CRTDBG_CHECK_CRT_DF;
 +    //TmpFlag|=_CRTDBG_LEAK_CHECK_DF;
-+
+ 
 +    //_CrtSetDbgFlag(TmpFlag);
 +    #endif
 +
@@ -3391,7 +3423,7 @@ index 71a72fb22..22224475a 100644
  
  static void
 diff --git a/dix/property.c b/dix/property.c
-index 3eca8615a..b77a6cb6f 100644
+index 3eca8615a..9d4930a2b 100644
 --- a/dix/property.c
 +++ b/dix/property.c
 @@ -422,15 +422,14 @@ DeleteAllWindowProperties(WindowPtr pWin)
@@ -3615,7 +3647,7 @@ index 67850593b..6d4365b34 100644
      stuff->event = eventT;
  
 diff --git a/dix/window.c b/dix/window.c
-index cd917f006..eed1e7472 100644
+index cd917f006..ac2425859 100644
 --- a/dix/window.c
 +++ b/dix/window.c
 @@ -939,16 +939,16 @@ CreateWindow(Window wid, WindowPtr pParent, int x, int y, unsigned w,
@@ -6851,7 +6883,7 @@ index 04cd514ab..d2bed9d30 100644
 +    g_pwinKeyboard=NULL;
  }
 diff --git a/hw/xwin/InitOutput.c b/hw/xwin/InitOutput.c
-index 7a03bfb91..65c36415d 100644
+index 7a03bfb91..16a22166b 100644
 --- a/hw/xwin/InitOutput.c
 +++ b/hw/xwin/InitOutput.c
 @@ -38,6 +38,7 @@ from The Open Group.
@@ -7514,7 +7546,7 @@ index 34ff24c24..1430bef2b 100644
  #define GLWIN_TRACE_MSG(a, ...)
  #define GLWIN_DEBUG_MSG(a, ...)
 diff --git a/hw/xwin/glx/indirect.c b/hw/xwin/glx/indirect.c
-index ff015f763..fc10135f3 100644
+index ff015f763..7008dc94c 100644
 --- a/hw/xwin/glx/indirect.c
 +++ b/hw/xwin/glx/indirect.c
 @@ -79,12 +79,18 @@
@@ -8203,25 +8235,25 @@ index ff015f763..fc10135f3 100644
          }
  
 -        *hdc = GetDC(*hwnd);
-+        if (!gc->hDC) {
-+            winWindowPriv(pWin);
- 
+-
 -        if (*hdc == NULL)
 -            ErrorF("GetDC error: %s\n", glxWinErrorMessage());
-+            hdc = GetDC(*hwnd);
++        if (!gc->hDC) {
++            winWindowPriv(pWin);
  
 -        /* Check if the hwnd has changed... */
 -        if (*hwnd != gc->hwnd) {
 -            if (glxWinDebugSettings.enableTrace)
 -                GLWIN_DEBUG_HWND(*hwnd);
-+            if (hdc == NULL)
-+                ErrorF("GetDC error: %s: hwnd %x, gc %p, gc->ctx %p ,gc->hwnd %p\n", glxWinErrorMessage(), *hwnd, gc, gc->ctx, gc->hwnd);
++            hdc = GetDC(*hwnd);
  
 -            GLWIN_TRACE_MSG
 -                ("for context %p (native ctx %p), hWnd changed from %p to %p",
 -                 gc, gc->ctx, gc->hwnd, *hwnd);
 -            gc->hwnd = *hwnd;
--
++            if (hdc == NULL)
++                ErrorF("GetDC error: %s: hwnd %x, gc %p, gc->ctx %p ,gc->hwnd %p\n", glxWinErrorMessage(), *hwnd, gc, gc->ctx, gc->hwnd);
+ 
 -            /* We must select a pixelformat, but SetPixelFormat can only be called once for a window... */
 -            if (!glxWinSetPixelFormat(*hdc, 0, GLX_WINDOW_BIT, gc->base.pGlxScreen, gc->base.config)) {
 -                ErrorF("glxWinSetPixelFormat error: %s\n",
@@ -9073,7 +9105,7 @@ index 48795a8b5..2d5a907fd 100644
   * winrandr.c
   */
 diff --git a/hw/xwin/winSetAppUserModelID.c b/hw/xwin/winSetAppUserModelID.c
-index f9cb92cdd..36fe8bb20 100644
+index f9cb92cdd..b41da95d0 100644
 --- a/hw/xwin/winSetAppUserModelID.c
 +++ b/hw/xwin/winSetAppUserModelID.c
 @@ -34,6 +34,7 @@
@@ -10165,7 +10197,7 @@ index 000334ce3..8c489bdb8 100644
      return TRUE;
  }
 diff --git a/hw/xwin/winconfig.c b/hw/xwin/winconfig.c
-index 4f16b21e0..3c992d697 100644
+index 4f16b21e0..dbc01f52c 100644
 --- a/hw/xwin/winconfig.c
 +++ b/hw/xwin/winconfig.c
 @@ -140,19 +140,19 @@ winReadConfigfile()
@@ -10734,7 +10766,7 @@ index 444e843ec..34d4a1747 100644
      if (fForceShowWindow) {
          ErrorF
 diff --git a/hw/xwin/wincursor.c b/hw/xwin/wincursor.c
-index 3fc050bfa..6d243cdb8 100644
+index 3fc050bfa..2cd5b5692 100644
 --- a/hw/xwin/wincursor.c
 +++ b/hw/xwin/wincursor.c
 @@ -43,10 +43,9 @@
@@ -11210,7 +11242,7 @@ index 29535f05a..9020a59d9 100644
  extern HICON g_hIconX;
  extern HICON g_hSmallIconX;
 diff --git a/hw/xwin/winkeybd.c b/hw/xwin/winkeybd.c
-index 00586c25b..09fa3a3d4 100644
+index 00586c25b..771929f2d 100644
 --- a/hw/xwin/winkeybd.c
 +++ b/hw/xwin/winkeybd.c
 @@ -156,7 +156,7 @@ winKeybdProc(DeviceIntPtr pDeviceInt, int iState)
@@ -11356,7 +11388,7 @@ index aad99d9ad..eea47c849 100644
  
  /*
 diff --git a/hw/xwin/winmsg.c b/hw/xwin/winmsg.c
-index 2ee48ce5a..96fb1995a 100644
+index 2ee48ce5a..6f25f5aa8 100644
 --- a/hw/xwin/winmsg.c
 +++ b/hw/xwin/winmsg.c
 @@ -33,43 +33,12 @@
@@ -11467,14 +11499,13 @@ index 2ee48ce5a..96fb1995a 100644
 -}
  #endif
 diff --git a/hw/xwin/winmsg.h b/hw/xwin/winmsg.h
-index 02f672f08..55eba368f 100644
+index 02f672f08..cedbc25a3 100644
 --- a/hw/xwin/winmsg.h
 +++ b/hw/xwin/winmsg.h
-@@ -37,32 +37,21 @@
- /*
+@@ -38,31 +38,20 @@
   * Function prototypes
   */
--
+ 
 -#ifdef XWIN_XF86CONFIG
 -void
 -winDrvMsgVerb(int scrnIndex,
@@ -11483,7 +11514,6 @@ index 02f672f08..55eba368f 100644
 -void
 -winDrvMsg(int scrnIndex, MessageType type, const char *format, ...)
 -_X_ATTRIBUTE_PRINTF(3, 4);
-+
 +#include "os.h"
 +
 +#if !defined(_MSC_VER) || defined(_DEBUG)
@@ -11787,7 +11817,7 @@ index 73afaea55..440ba6dd1 100644
 +    }
 +}
 diff --git a/hw/xwin/winmultiwindowwindow.c b/hw/xwin/winmultiwindowwindow.c
-index 5b9b74e3d..759903d52 100644
+index 5b9b74e3d..da7c5087b 100644
 --- a/hw/xwin/winmultiwindowwindow.c
 +++ b/hw/xwin/winmultiwindowwindow.c
 @@ -75,18 +75,16 @@ winInitMultiWindowClass(void)
@@ -15011,7 +15041,7 @@ index 37e92ce61..399ea8111 100644
 +
  #endif
 diff --git a/hw/xwin/winscrinit.c b/hw/xwin/winscrinit.c
-index ae6bc12a6..2db47363a 100644
+index ae6bc12a6..58545340f 100644
 --- a/hw/xwin/winscrinit.c
 +++ b/hw/xwin/winscrinit.c
 @@ -52,10 +52,8 @@ winScreenInit(ScreenPtr pScreen, int argc, char **argv)
@@ -15025,13 +15055,11 @@ index ae6bc12a6..2db47363a 100644
  
      /* Allocate privates for this screen */
      if (!winAllocatePrivates(pScreen)) {
-@@ -86,27 +84,27 @@ winScreenInit(ScreenPtr pScreen, int argc, char **argv)
- 
+@@ -87,26 +85,26 @@ winScreenInit(ScreenPtr pScreen, int argc, char **argv)
      /* Horribly misnamed function: Allow engine to adjust BPP for screen */
      dwInitialBPP = pScreenInfo->dwBPP;
--
+ 
 -    if (!(*pScreenPriv->pwinAdjustVideoMode) (pScreen)) {
-+
 +    if (pScreenPriv->pwinAdjustVideoMode && !(*pScreenPriv->pwinAdjustVideoMode) (pScreen)) {
          ErrorF("winScreenInit - winAdjustVideoMode () failed\n");
          return FALSE;
@@ -15178,7 +15206,7 @@ index ae6bc12a6..2db47363a 100644
      return TRUE;
  }
 diff --git a/hw/xwin/winshadddnl.c b/hw/xwin/winshadddnl.c
-index 290176920..5dd7ff6c5 100644
+index 290176920..ad1b0fe28 100644
 --- a/hw/xwin/winshadddnl.c
 +++ b/hw/xwin/winshadddnl.c
 @@ -35,6 +35,7 @@
@@ -15963,7 +15991,7 @@ index 401ec175a..161ddb6ca 100644
  /*
    This is unnecessarily heavyweight, we could just call CoInitialize() once at
 diff --git a/hw/xwin/wintrayicon.c b/hw/xwin/wintrayicon.c
-index 5d1e6aefa..b68857b5e 100644
+index 5d1e6aefa..e419775b1 100644
 --- a/hw/xwin/wintrayicon.c
 +++ b/hw/xwin/wintrayicon.c
 @@ -38,34 +38,58 @@
@@ -16319,7 +16347,7 @@ index 92a839c4d..cbd42a74e 100644
   winPropertyStoreInit(void);
  
 diff --git a/hw/xwin/winwndproc.c b/hw/xwin/winwndproc.c
-index c7950880f..0f32e7e96 100644
+index c7950880f..fdfa352ec 100644
 --- a/hw/xwin/winwndproc.c
 +++ b/hw/xwin/winwndproc.c
 @@ -44,13 +44,101 @@
@@ -16541,17 +16569,15 @@ index c7950880f..0f32e7e96 100644
  
          if (s_pScreenInfo->iResizeMode == resizeWithRandr) {
              /* Actual resizing is done on WM_EXITSIZEMOVE */
-@@ -395,20 +481,22 @@ winWindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
-         s_pScreenInfo->dwYOffset = -si.nPos;
+@@ -396,19 +482,21 @@ winWindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
      }
          return 0;
--
+ 
 -    case WM_SYSCOMMAND:
 -        if (s_pScreenInfo->iResizeMode == resizeWithRandr &&
 -            ((wParam & 0xfff0) == SC_MAXIMIZE ||
 -             (wParam & 0xfff0) == SC_RESTORE))
 -            PostMessage(hwnd, WM_EXITSIZEMOVE, 0, 0);
-+
 +      case WM_SYSCOMMAND:
 +          if ((wParam & 0xfff0) == SC_MAXIMIZE ||
 +              (wParam & 0xfff0) == SC_RESTORE)
@@ -18668,7 +18694,7 @@ index f0d022fba..7feba7433 100644
  
  #if USE_ISPRINT
 diff --git a/os/xdmcp.c b/os/xdmcp.c
-index 093e30096..3688ffbb7 100644
+index 093e30096..912a91a0d 100644
 --- a/os/xdmcp.c
 +++ b/os/xdmcp.c
 @@ -490,9 +490,10 @@ XdmcpRegisterConnection(int type, const char *address, int addrlen)
@@ -19152,7 +19178,7 @@ index f9b7b06d9..bcc64f063 100644
                   ((xkbDebugFlags < 2) ? 1 :
                    ((xkbDebugFlags > 10) ? 10 : (int) xkbDebugFlags)),
 diff --git a/xkb/xkb.c b/xkb/xkb.c
-index 5131bfcdf..cdd89f839 100644
+index 5131bfcdf..40f302dd3 100644
 --- a/xkb/xkb.c
 +++ b/xkb/xkb.c
 @@ -195,14 +195,13 @@ ProcXkbUseExtension(ClientPtr client)
