@@ -15,3 +15,4 @@ cp -r expat.in/* expat
 ./libXau.in/prebuild.sh
 ./libXaw.in/prebuild.sh
 ./libfontenc.in/prebuild.sh
+./xserver.in/prebuild.sh
