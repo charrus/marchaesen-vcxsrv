@@ -2,5 +2,5 @@
 
 rsync -rptC xserver/ xorg-server/
 cd xorg-server
-cp ../xserver.in/files/* .
+cp -r ../xserver.in/files/* .
 git apply ../xserver.in/xserver.patch
