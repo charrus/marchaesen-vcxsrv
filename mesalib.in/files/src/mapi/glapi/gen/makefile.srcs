@@ -17,7 +17,10 @@ MESA_GLX_DIR = $(MHMAKECONF)/xorg-server/glx
 XORG_GLX_DIR = $(MHMAKECONF)/xorg-server/glx
 
 MESA_GLAPI_OUTPUTS = \
-	$(MESA_GLAPI_DIR)/glapi_mapi_tmp.h
+	$(MESA_GLAPI_DIR)/glapi_mapi_tmp.h \
+	$(MESA_GLX_DIR )/glprocs.h \
+	$(MESA_GLAPI_DIR)/glapitemp.h \
+	$(MESA_GLAPI_DIR)/glapitable.h
 
 MESA_GLAPI_OUTPUTS += $(MESA_GLAPI_DIR)/glapi_gentable.c
 
@@ -50,11 +53,9 @@ API_XML = \
 	es_EXT.xml \
 	gl_and_es_API.xml \
 	gl_and_glX_API.xml \
-	ARB_ES2_compatibility.xml \
-	ARB_ES3_compatibility.xml \
 	ARB_base_instance.xml \
-	ARB_bindless_texture.xml \
 	ARB_blend_func_extended.xml \
+	ARB_bindless_texture.xml \
 	ARB_clear_buffer_object.xml \
 	ARB_clear_texture.xml \
 	ARB_clip_control.xml \
@@ -73,14 +74,15 @@ API_XML = \
 	ARB_draw_elements_base_vertex.xml \
 	ARB_draw_indirect.xml \
 	ARB_draw_instanced.xml \
+	ARB_ES2_compatibility.xml \
+	ARB_ES3_compatibility.xml \
 	ARB_framebuffer_no_attachments.xml \
 	ARB_framebuffer_object.xml \
 	ARB_get_program_binary.xml \
 	ARB_get_texture_sub_image.xml \
-	ARB_gl_spirv.xml \
-	ARB_gpu_shader5.xml \
 	ARB_gpu_shader_fp64.xml \
 	ARB_gpu_shader_int64.xml \
+	ARB_gpu_shader5.xml \
 	ARB_indirect_parameters.xml \
 	ARB_instanced_arrays.xml \
 	ARB_internalformat_query.xml \
@@ -97,12 +99,9 @@ API_XML = \
 	ARB_separate_shader_objects.xml \
 	ARB_shader_atomic_counters.xml \
 	ARB_shader_image_load_store.xml \
-	ARB_shader_storage_buffer_object.xml \
 	ARB_shader_subroutine.xml \
-	ARB_shading_language_include.xml \
+	ARB_shader_storage_buffer_object.xml \
 	ARB_sparse_buffer.xml \
-	ARB_sparse_texture.xml \
-	ARB_spirv_extensions.xml \
 	ARB_sync.xml \
 	ARB_tessellation_shader.xml \
 	ARB_texture_barrier.xml \
@@ -113,40 +112,32 @@ API_XML = \
 	ARB_texture_float.xml \
 	ARB_texture_gather.xml \
 	ARB_texture_multisample.xml \
-	ARB_texture_rg.xml \
 	ARB_texture_rgb10_a2ui.xml \
-	ARB_texture_storage.xml \
+	ARB_texture_rg.xml \
 	ARB_texture_storage_multisample.xml \
+	ARB_texture_storage.xml \
 	ARB_texture_view.xml \
 	ARB_uniform_buffer_object.xml \
 	ARB_vertex_array_object.xml \
 	ARB_vertex_attrib_64bit.xml \
 	ARB_vertex_attrib_binding.xml \
-	ARB_vertex_type_2_10_10_10_rev.xml \
 	ARB_viewport_array.xml \
-	AMD_depth_clamp_separate.xml \
 	AMD_draw_buffers_blend.xml \
-	AMD_gpu_shader_int64.xml \
 	AMD_performance_monitor.xml \
-	EXT_EGL_image_storage.xml \
-	EXT_direct_state_access.xml \
+	ARB_vertex_type_2_10_10_10_rev.xml \
+	APPLE_object_purgeable.xml \
+	APPLE_vertex_array_object.xml \
 	EXT_draw_buffers2.xml \
 	EXT_external_objects.xml \
 	EXT_external_objects_fd.xml \
-	EXT_external_objects_win32.xml \
 	EXT_framebuffer_object.xml \
 	EXT_gpu_shader4.xml \
-	EXT_multisampled_render_to_texture.xml \
 	EXT_packed_depth_stencil.xml \
 	EXT_provoking_vertex.xml \
 	EXT_separate_shader_objects.xml \
-	EXT_shader_image_load_store.xml \
 	EXT_texture_array.xml \
 	EXT_texture_integer.xml \
-	EXT_texture_storage.xml \
-	EXT_texture_storage_compression.xml \
 	EXT_transform_feedback.xml \
-	EXT_vertex_attrib_64bit.xml \
 	EXT_window_rectangles.xml \
 	GREMEDY_string_marker.xml \
 	INTEL_performance_query.xml \
@@ -154,18 +145,12 @@ API_XML = \
 	KHR_context_flush_control.xml \
 	KHR_robustness.xml \
 	KHR_robustness_es.xml \
-	KHR_shader_subgroup.xml \
 	KHR_texture_compression_astc.xml \
 	MESA_tile_raster_order.xml \
-	NV_alpha_to_coverage_dither_control.xml \
 	NV_conditional_render.xml \
-	NV_copy_image.xml \
-	NV_half_float.xml \
 	NV_primitive_restart.xml \
 	NV_texture_barrier.xml \
-	NV_timeline_semaphore.xml \
 	NV_vdpau_interop.xml \
-	NV_viewport_swizzle.xml \
 	OES_EGL_image.xml \
 	OES_fixed_point.xml \
 	OES_single_precision.xml \
@@ -189,6 +174,15 @@ PYTHON_GEN = $(PYTHON3)
 $(MESA_GLAPI_DIR)/glapi_mapi_tmp.h: $(MESA_MAPI_DIR)/mapi_abi.py $(COMMON)
 	$(PYTHON_GEN) $(MESA_MAPI_DIR)/mapi_abi.py \
 		--printer glapi $(srcdir)/gl_and_es_API.xml > $@
+
+$(MESA_GLX_DIR )/glprocs.h: gl_procs.py $(COMMON)
+	$(PYTHON_GEN) $(srcdir)/gl_procs.py -c -f $(srcdir)/gl_and_es_API.xml > $@
+
+$(MESA_GLAPI_DIR)/glapitemp.h: gl_apitemp.py $(COMMON)
+	$(PYTHON_GEN) $(srcdir)/gl_apitemp.py -f $(srcdir)/gl_and_es_API.xml > $@
+
+$(MESA_GLAPI_DIR)/glapitable.h: gl_table.py $(COMMON)
+	$(PYTHON_GEN) $(srcdir)/gl_table.py -f $(srcdir)/gl_and_es_API.xml > $@
 
 $(MESA_GLAPI_DIR)/glapi_gentable.c: gl_gentable.py $(COMMON)
 	$(PYTHON_GEN) $(srcdir)/gl_gentable.py -f $(srcdir)/gl_and_es_API.xml > $@
@@ -285,3 +279,11 @@ $(MESA_GLX_DIR)/indirect_size.c: glX_proto_size.py $(COMMON_GLX)
 	$(PYTHON_GEN) $(srcdir)/glX_proto_size.py -f $(srcdir)/gl_API.xml -m size_c --only-set > $@
 
 ######################################################################
+
+$(XORG_GLX_DIR)/indirect_size_get.h: glX_proto_size.py $(COMMON_GLX)
+	$(PYTHON_GEN) $< -f $(srcdir)/gl_API.xml -m size_h \
+           --only-get --header-tag _INDIRECT_SIZE_GET_H_ > $@
+
+$(XORG_GLX_DIR)/indirect_size_get.c: glX_proto_size.py $(COMMON_GLX)
+	$(PYTHON_GEN) $< -f $(srcdir)/gl_API.xml -m size_c  > $@
+
