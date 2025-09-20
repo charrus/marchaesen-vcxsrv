@@ -37,3 +37,6 @@
 [submodule "libfontenc"]
 	path = libfontenc
 	url = https://gitlab.freedesktop.org/xorg/lib/libfontenc.git
+[submodule "mesalib"]
+	path = mesalib
+	url = https://gitlab.freedesktop.org/mesa/mesa.git

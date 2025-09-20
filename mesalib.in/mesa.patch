@@ -1,0 +1,4098 @@
+diff --git a/bin/git_sha1_gen.py b/bin/git_sha1_gen.py
+index a457b310d48..df2f06d6225 100644
+--- a/bin/git_sha1_gen.py
++++ b/bin/git_sha1_gen.py
+@@ -11,7 +11,7 @@ import sys
+ 
+ def get_git_sha1():
+     """Try to get the git SHA1 with git rev-parse."""
+-    git_dir = os.path.join(os.path.dirname(sys.argv[0]), '..', '.git')
++    git_dir = os.path.join(os.path.dirname(sys.argv[0]), '../..', '.git')
+     try:
+         git_sha1 = subprocess.check_output([
+             'git',
+diff --git a/include/GL/glext.h b/include/GL/glext.h
+index 8bacaf9906a..f84d89f6a37 100644
+--- a/include/GL/glext.h
++++ b/include/GL/glext.h
+@@ -11464,6 +11464,10 @@ GLAPI void APIENTRY glDrawTransformFeedbackNV (GLenum mode, GLuint id);
+ #endif
+ #endif /* GL_NV_transform_feedback2 */
+ 
++#ifndef GL_NV_uniform_buffer_std430_layout
++#define GL_NV_uniform_buffer_std430_layout 1
++#endif /* GL_NV_uniform_buffer_std430_layout */
++
+ #ifndef GL_NV_uniform_buffer_unified_memory
+ #define GL_NV_uniform_buffer_unified_memory 1
+ #define GL_UNIFORM_BUFFER_UNIFIED_NV      0x936E
+@@ -11979,8 +11983,10 @@ GLAPI void APIENTRY glViewportSwizzleNV (GLuint index, GLenum swizzlex, GLenum s
+ #define GL_MAX_VIEWS_OVR                  0x9631
+ #define GL_FRAMEBUFFER_INCOMPLETE_VIEW_TARGETS_OVR 0x9633
+ typedef void (APIENTRYP PFNGLFRAMEBUFFERTEXTUREMULTIVIEWOVRPROC) (GLenum target, GLenum attachment, GLuint texture, GLint level, GLint baseViewIndex, GLsizei numViews);
++typedef void (APIENTRYP PFNGLNAMEDFRAMEBUFFERTEXTUREMULTIVIEWOVRPROC) (GLuint framebuffer, GLenum attachment, GLuint texture, GLint level, GLint baseViewIndex, GLsizei numViews);
+ #ifdef GL_GLEXT_PROTOTYPES
+ GLAPI void APIENTRY glFramebufferTextureMultiviewOVR (GLenum target, GLenum attachment, GLuint texture, GLint level, GLint baseViewIndex, GLsizei numViews);
++GLAPI void APIENTRY glNamedFramebufferTextureMultiviewOVR (GLuint framebuffer, GLenum attachment, GLuint texture, GLint level, GLint baseViewIndex, GLsizei numViews);
+ #endif
+ #endif /* GL_OVR_multiview */
+ 
+diff --git a/include/drm-uapi/drm.h b/include/drm-uapi/drm.h
+index 4e4f7c2c39e..1f2578d6621 100644
+--- a/include/drm-uapi/drm.h
++++ b/include/drm-uapi/drm.h
+@@ -41,6 +41,21 @@
+ #include <asm/ioctl.h>
+ typedef unsigned int drm_handle_t;
+ 
++#elif defined(_WIN32)
++
++#include <stdint.h>
++#define __volatile__
++typedef int8_t   __s8;
++typedef uint8_t  __u8;
++typedef int16_t  __s16;
++typedef uint16_t __u16;
++typedef int32_t  __s32;
++typedef uint32_t __u32;
++typedef int64_t  __s64;
++typedef uint64_t __u64;
++typedef size_t   __kernel_size_t;
++typedef unsigned long drm_handle_t;
++
+ #else /* One of the BSDs */
+ 
+ #include <stdint.h>
+diff --git a/src/c11/impl/threads_win32.c b/src/c11/impl/threads_win32.c
+index 91870baa1ae..09ace1ad446 100644
+--- a/src/c11/impl/threads_win32.c
++++ b/src/c11/impl/threads_win32.c
+@@ -339,7 +339,6 @@ thrd_equal(thrd_t thr0, thrd_t thr1)
+ }
+ 
+ // 7.25.5.5
+-_Noreturn
+ void
+ thrd_exit(int res)
+ {
+diff --git a/src/c11/threads.h b/src/c11/threads.h
+index dbcb3459a9b..9f76ef54a87 100644
+--- a/src/c11/threads.h
++++ b/src/c11/threads.h
+@@ -167,11 +167,6 @@ int thrd_create(thrd_t *, thrd_start_t, void *);
+ thrd_t thrd_current(void);
+ int thrd_detach(thrd_t);
+ int thrd_equal(thrd_t, thrd_t);
+-#if defined(__cplusplus)
+-[[ noreturn ]]
+-#else
+-_Noreturn
+-#endif
+ void thrd_exit(int);
+ int thrd_join(thrd_t, int *);
+ int thrd_sleep(const struct timespec *, struct timespec *);
+diff --git a/src/compiler/glsl/ast_to_hir.cpp b/src/compiler/glsl/ast_to_hir.cpp
+index 263d05267e6..1d1e939ee40 100644
+--- a/src/compiler/glsl/ast_to_hir.cpp
++++ b/src/compiler/glsl/ast_to_hir.cpp
+@@ -4486,7 +4486,7 @@ get_variable_being_redeclared(ir_variable **var_ptr, YYLTYPE loc,
+       }
+ 
+       earlier->type = var->type;
+-      delete var;
++      ir_variable::operator delete(var, state);
+       var = NULL;
+       *var_ptr = NULL;
+    } else if (earlier->type != var->type) {
+@@ -8677,7 +8677,7 @@ ast_interface_block::hir(exec_list *instructions,
+          earlier->data.how_declared = ir_var_declared_normally;
+          earlier->type = var->type;
+          earlier->reinit_interface_type(block_type);
+-         delete var;
++         ir_variable::operator delete(var, state);
+       } else {
+          if (this->layout.flags.q.explicit_binding) {
+             apply_explicit_binding(state, &loc, var, var->type,
+diff --git a/src/compiler/glsl/glcpp/glcpp-parse.y b/src/compiler/glsl/glcpp/glcpp-parse.y
+index b3c16f18332..195588f512a 100644
+--- a/src/compiler/glsl/glcpp/glcpp-parse.y
++++ b/src/compiler/glsl/glcpp/glcpp-parse.y
+@@ -176,8 +176,8 @@ add_builtin_define(glcpp_parser_t *parser, const char *name, int value);
+ 
+ %}
+ 
+-%pure-parser
+-%error-verbose
++%define api.pure
++%define parse.error verbose
+ 
+ %locations
+ %initial-action {
+diff --git a/src/compiler/glsl/glcpp/glcpp.c b/src/compiler/glsl/glcpp/glcpp.c
+index 229a3fd6978..333465d6e43 100644
+--- a/src/compiler/glsl/glcpp/glcpp.c
++++ b/src/compiler/glsl/glcpp/glcpp.c
+@@ -31,6 +31,14 @@
+ #include "main/shaderobj.h"
+ #include "util/strtod.h"
+ 
++#ifdef _MSC_VER
++#include <io.h>
++#define STDIN_FILENO 0
++#define read _read
++#define open _open
++#define close _close
++#endif
++
+ extern int glcpp_parser_debug;
+ 
+ void
+diff --git a/src/compiler/glsl/glsl_lexer.ll b/src/compiler/glsl/glsl_lexer.ll
+index 9cff62721d0..e9ce41daf9b 100644
+--- a/src/compiler/glsl/glsl_lexer.ll
++++ b/src/compiler/glsl/glsl_lexer.ll
+@@ -26,7 +26,7 @@
+ #include "util/strtod.h"
+ #include "ast.h"
+ #include "glsl_parser_extras.h"
+-#include "glsl_parser.h"
++#include "glsl_parser.hpp"
+ #include "main/consts_exts.h"
+ 
+ static int classify_identifier(struct _mesa_glsl_parse_state *, const char *,
+@@ -664,7 +664,7 @@ union		KEYWORD(110, 100, 0, 0, UNION);
+ enum		KEYWORD(110, 100, 0, 0, ENUM);
+ typedef		KEYWORD(110, 100, 0, 0, TYPEDEF);
+ template	KEYWORD(110, 100, 0, 0, TEMPLATE);
+-this		KEYWORD(110, 100, 0, 0, THIS);
++this		KEYWORD(110, 100, 0, 0, KW_THIS);
+ packed		KEYWORD_WITH_ALT(110, 100, 140, 300, yyextra->ARB_uniform_buffer_object_enable, PACKED_TOK);
+ goto		KEYWORD(110, 100, 0, 0, GOTO);
+ switch		KEYWORD(110, 100, 130, 300, SWITCH);
+diff --git a/src/compiler/glsl/glsl_parser.yy b/src/compiler/glsl/glsl_parser.yy
+index 352fefd5ee4..09b3b9d698c 100644
+--- a/src/compiler/glsl/glsl_parser.yy
++++ b/src/compiler/glsl/glsl_parser.yy
+@@ -23,6 +23,8 @@
+  */
+ #include <stdio.h>
+ #include <stdlib.h>
++#include <stdint.h>
++#include <unistd.h>
+ #include <string.h>
+ #ifndef _MSC_VER
+ #include <strings.h>
+@@ -82,8 +84,8 @@ static bool match_layout_qualifier(const char *s1, const char *s2,
+ 
+ %expect 0
+ 
+-%pure-parser
+-%error-verbose
++%define api.pure
++%define parse.error verbose
+ 
+ %locations
+ %initial-action {
+@@ -173,7 +175,7 @@ static bool match_layout_qualifier(const char *s1, const char *s2,
+ %token DOT_TOK
+    /* Reserved words that are not actually used in the grammar.
+     */
+-%token ASM CLASS UNION ENUM TYPEDEF TEMPLATE THIS PACKED_TOK GOTO
++%token ASM CLASS UNION ENUM TYPEDEF TEMPLATE KW_THIS PACKED_TOK GOTO
+ %token INLINE_TOK NOINLINE PUBLIC_TOK STATIC EXTERN EXTERNAL
+ %token LONG_TOK SHORT_TOK HALF FIXED_TOK UNSIGNED INPUT_TOK
+ %token HVEC2 HVEC3 HVEC4 FVEC2 FVEC3 FVEC4
+@@ -297,7 +299,7 @@ translation_unit:
+    }
+    external_declaration_list
+    {
+-      delete state->symbols;
++      glsl_symbol_table::operator delete(state->symbols, ralloc_parent(state));
+       state->symbols = new(ralloc_parent(state)) glsl_symbol_table;
+       if (state->es_shader) {
+          if (state->stage == MESA_SHADER_FRAGMENT) {
+diff --git a/src/compiler/glsl/glsl_parser_extras.cpp b/src/compiler/glsl/glsl_parser_extras.cpp
+index 99e35465ee7..b0f255daa7b 100644
+--- a/src/compiler/glsl/glsl_parser_extras.cpp
++++ b/src/compiler/glsl/glsl_parser_extras.cpp
+@@ -37,7 +37,7 @@
+ #include "util/mesa-blake3.h"
+ #include "ast.h"
+ #include "glsl_parser_extras.h"
+-#include "glsl_parser.h"
++#include "glsl_parser.hpp"
+ #include "glsl_to_nir.h"
+ #include "ir_optimization.h"
+ #include "builtin_functions.h"
+@@ -2419,7 +2419,7 @@ _mesa_glsl_compile_shader(struct gl_context *ctx, struct gl_shader *shader,
+       }
+    }
+ 
+-   delete state->symbols;
++   glsl_symbol_table::operator delete(state->symbols, shader->ir);
+    ralloc_free(state);
+ 
+    if (ctx->_Shader && ctx->_Shader->Flags & GLSL_DUMP) {
+diff --git a/src/compiler/glsl/ir_constant_expression.cpp b/src/compiler/glsl/ir_constant_expression.cpp
+index 25dfe7322b6..4c0da13f178 100644
+--- a/src/compiler/glsl/ir_constant_expression.cpp
++++ b/src/compiler/glsl/ir_constant_expression.cpp
+@@ -33,6 +33,7 @@
+  *    * Initializers for \c const variables
+  */
+ 
++#include <stdint.h>
+ #include <math.h>
+ #include "util/rounding.h" /* for _mesa_roundeven */
+ #include "util/half_float.h"
+diff --git a/src/compiler/glsl/main.cpp b/src/compiler/glsl/main.cpp
+index 2d8b5f82bcc..ae043e819ed 100644
+--- a/src/compiler/glsl/main.cpp
++++ b/src/compiler/glsl/main.cpp
+@@ -23,7 +23,16 @@
+ 
+ #include <stdlib.h>
+ #include <stdio.h>
++#ifdef _MSC_VER
++#define __STDC__ 1
+ #include <getopt.h>
++#define open _open
++#define read _read
++#define fstat _fstat
++#define stat _stat
++#define close _close
++#define O_RDONLY _O_RDONLY
++#endif
+ 
+ /** @file main.cpp
+  *
+diff --git a/src/compiler/nir/nir_validate.c b/src/compiler/nir/nir_validate.c
+index c1c38fc90c7..b09f063bb61 100644
+--- a/src/compiler/nir/nir_validate.c
++++ b/src/compiler/nir/nir_validate.c
+@@ -119,7 +119,7 @@ validate_assert_impl(validate_state *state, bool cond, const char *str,
+ }
+ 
+ #define validate_assert(state, cond) \
+-   validate_assert_impl(state, (cond), #cond, __FILE__, __LINE__)
++   validate_assert_impl(state, cond ? true : false, #cond, __FILE__, __LINE__)
+ 
+ static void
+ validate_num_components(validate_state *state, unsigned num_components)
+diff --git a/src/compiler/shader_enums.h b/src/compiler/shader_enums.h
+index 2af078de2f5..0a906c87d82 100644
+--- a/src/compiler/shader_enums.h
++++ b/src/compiler/shader_enums.h
+@@ -1227,7 +1227,7 @@ mesa_count_tess_level_components(const enum tess_primitive_mode mode,
+ /**
+  * Mesa primitive types for both GL and Vulkan:
+  */
+-enum ENUM_PACKED mesa_prim
++enum mesa_prim
+ {
+    MESA_PRIM_POINTS,
+    MESA_PRIM_LINES,
+@@ -1573,7 +1573,7 @@ enum cl_sampler_filter_mode {
+ #define MAT_BIT_BACK_INDEXES          (1<<MAT_ATTRIB_BACK_INDEXES)
+ 
+ /** An enum representing what kind of input gl_SubgroupSize is. */
+-enum ENUM_PACKED gl_subgroup_size
++enum gl_subgroup_size
+ {
+    /** Actual subgroup size, whatever that happens to be */
+    SUBGROUP_SIZE_VARYING = 0,
+diff --git a/src/gallium/auxiliary/driver_trace/tr_dump.c b/src/gallium/auxiliary/driver_trace/tr_dump.c
+index 353dcafc9fd..1629b5ae6de 100644
+--- a/src/gallium/auxiliary/driver_trace/tr_dump.c
++++ b/src/gallium/auxiliary/driver_trace/tr_dump.c
+@@ -38,6 +38,7 @@
+  * @author Jose Fonseca <jfonseca@vmware.com>
+  */
+ 
++#include <windows.h>
+ #include "util/detect.h"
+ 
+ #include <stdio.h>
+diff --git a/src/gallium/auxiliary/driver_trace/tr_screen.c b/src/gallium/auxiliary/driver_trace/tr_screen.c
+index e643e054340..68707b9d085 100644
+--- a/src/gallium/auxiliary/driver_trace/tr_screen.c
++++ b/src/gallium/auxiliary/driver_trace/tr_screen.c
+@@ -25,6 +25,7 @@
+  *
+  **************************************************************************/
+ 
++#include <windows.h>
+ #include "util/format/u_format.h"
+ #include "util/u_memory.h"
+ #include "util/hash_table.h"
+diff --git a/src/gallium/auxiliary/rtasm/rtasm_execmem.c b/src/gallium/auxiliary/rtasm/rtasm_execmem.c
+index 82c4d2f019c..ed3dc006154 100644
+--- a/src/gallium/auxiliary/rtasm/rtasm_execmem.c
++++ b/src/gallium/auxiliary/rtasm/rtasm_execmem.c
+@@ -30,6 +30,7 @@
+  * \author Keith Whitwell
+  */
+ 
++#include <windows.h>
+ 
+ #include "util/compiler.h"
+ #include "util/simple_mtx.h"
+diff --git a/src/gallium/auxiliary/tgsi/tgsi_exec.c b/src/gallium/auxiliary/tgsi/tgsi_exec.c
+index 3b5398d6120..4f359d96a14 100644
+--- a/src/gallium/auxiliary/tgsi/tgsi_exec.c
++++ b/src/gallium/auxiliary/tgsi/tgsi_exec.c
+@@ -77,16 +77,26 @@ static_assert(alignof(union tgsi_exec_channel) == 16, "");
+ static_assert(alignof(struct tgsi_exec_vector) == 16, "");
+ static_assert(alignof(struct tgsi_exec_machine) == 16, "");
+ 
+-union tgsi_double_channel {
+-   alignas(16)
++union
++#ifdef _MSC_VER
++ __declspec(align(16))
++#else
++ __attribute__((aligned(16)))
++#endif
++tgsi_double_channel {
+    double d[TGSI_QUAD_SIZE];
+    unsigned u[TGSI_QUAD_SIZE][2];
+    uint64_t u64[TGSI_QUAD_SIZE];
+    int64_t i64[TGSI_QUAD_SIZE];
+ };
+ 
+-struct tgsi_double_vector {
+-   alignas(16)
++struct
++#ifdef _MSC_VER
++ __declspec(align(16))
++#else
++ __attribute__((aligned(16)))
++#endif
++tgsi_double_vector {
+    union tgsi_double_channel xy;
+    union tgsi_double_channel zw;
+ };
+diff --git a/src/gallium/auxiliary/tgsi/tgsi_exec.h b/src/gallium/auxiliary/tgsi/tgsi_exec.h
+index 55d349e15ce..19e3eb9f909 100644
+--- a/src/gallium/auxiliary/tgsi/tgsi_exec.h
++++ b/src/gallium/auxiliary/tgsi/tgsi_exec.h
+@@ -71,9 +71,14 @@ extern "C" {
+ /**
+   * Registers may be treated as float, signed int or unsigned int.
+   */
+-union tgsi_exec_channel
++union
++#ifdef _MSC_VER
++ __declspec(align(16))
++#else
++ __attribute__((aligned(16)))
++#endif
++   tgsi_exec_channel
+ {
+-   alignas(16)
+    float    f[TGSI_QUAD_SIZE];
+    int32_t  i[TGSI_QUAD_SIZE];
+    uint32_t u[TGSI_QUAD_SIZE];
+@@ -82,9 +87,15 @@ union tgsi_exec_channel
+ /**
+   * A vector[RGBA] of channels[4 pixels]
+   */
+-struct tgsi_exec_vector
++struct
++#ifdef _MSC_VER
++ __declspec(align(16))
++#else
++ __attribute__((aligned(16)))
++#endif
++tgsi_exec_vector
+ {
+-   alignas(16) union tgsi_exec_channel xyzw[TGSI_NUM_CHANNELS];
++   union tgsi_exec_channel xyzw[TGSI_NUM_CHANNELS];
+ };
+ 
+ /**
+@@ -292,11 +303,16 @@ typedef void (* apply_sample_offset_func)(
+ /**
+  * Run-time virtual machine state for executing TGSI shader.
+  */
+-struct tgsi_exec_machine
++struct
++#ifdef _MSC_VER
++ __declspec(align(16))
++#else
++ __attribute__((aligned(16)))
++#endif
++tgsi_exec_machine
+ {
+    /* Total = program temporaries + internal temporaries
+     */
+-   alignas(16)
+    struct tgsi_exec_vector       Temps[TGSI_EXEC_NUM_TEMPS];
+ 
+    unsigned                       ImmsReserved;
+diff --git a/src/gallium/auxiliary/translate/translate_sse.c b/src/gallium/auxiliary/translate/translate_sse.c
+index 7c597bf07a5..6138b214c90 100644
+--- a/src/gallium/auxiliary/translate/translate_sse.c
++++ b/src/gallium/auxiliary/translate/translate_sse.c
+@@ -111,8 +111,8 @@ struct translate_sse
+    struct x86_function elt8_func;
+    struct x86_function *func;
+ 
+-   alignas(16) float consts[NUM_FLOAT_CONSTS][4];
+-   alignas(16) float uconsts[NUM_UNSIGNED_CONSTS][4];
++   __declspec(align(16)) float consts[NUM_FLOAT_CONSTS][4];
++   __declspec(align(16)) float uconsts[NUM_UNSIGNED_CONSTS][4];
+    int8_t reg_to_const[16];
+    int8_t const_to_reg[NUM_FLOAT_CONSTS + NUM_UNSIGNED_CONSTS];
+ 
+diff --git a/src/gallium/frontends/dri/dri2.c b/src/gallium/frontends/dri/dri2.c
+index d7d0b177a7c..aba67ed056c 100644
+--- a/src/gallium/frontends/dri/dri2.c
++++ b/src/gallium/frontends/dri/dri2.c
+@@ -1658,7 +1658,7 @@ dri2_query_compression_rates(struct dri_screen *screen, const struct dri_config
+    struct pipe_screen *pscreen = screen->base.screen;
+    struct gl_config *gl_config = (struct gl_config *) config;
+    enum pipe_format format = gl_config->color_format;
+-   uint32_t pipe_rates[max];
++   uint32_t *pipe_rates=alloca(max*sizeof(uint32_t));
+ 
+    if (!pscreen->is_format_supported(pscreen, format, screen->target, 0, 0,
+                                      PIPE_BIND_RENDER_TARGET))
+diff --git a/src/gallium/frontends/dri/dri_context.c b/src/gallium/frontends/dri/dri_context.c
+index fe32d5c518f..26ca4a32bb1 100644
+--- a/src/gallium/frontends/dri/dri_context.c
++++ b/src/gallium/frontends/dri/dri_context.c
+@@ -28,12 +28,13 @@
+  * Author: Keith Whitwell <keithw@vmware.com>
+  * Author: Jakob Bornecrantz <wallbraker@gmail.com>
+  */
+-
++#define _WINDOWS_
+ #include "dri_screen.h"
+ #include "dri_drawable.h"
+ #include "dri_context.h"
+ #include "frontend/drm_driver.h"
+ 
++#undef _WINDOWS_
+ #include "pipe/p_context.h"
+ #include "pipe-loader/pipe_loader.h"
+ #include "state_tracker/st_context.h"
+diff --git a/src/gallium/frontends/dri/dri_drawable.c b/src/gallium/frontends/dri/dri_drawable.c
+index 46275ba921a..41d45e381a6 100644
+--- a/src/gallium/frontends/dri/dri_drawable.c
++++ b/src/gallium/frontends/dri/dri_drawable.c
+@@ -29,9 +29,11 @@
+  * Author: Jakob Bornecrantz <wallbraker@gmail.com>
+  */
+ 
++#define _WINDOWS_
+ #include "dri_screen.h"
+ #include "dri_context.h"
+ #include "dri_drawable.h"
++#undef _WINDOWS_
+ 
+ #include "pipe/p_screen.h"
+ #include "util/format/u_format.h"
+@@ -188,7 +190,7 @@ dri_create_drawable(struct dri_screen *screen, const struct dri_config *config,
+       drisw_init_drawable(drawable, isPixmap, visual->alphaBits);
+       break;
+    case DRI_SCREEN_KOPPER:
+-      kopper_init_drawable(drawable, isPixmap, visual->alphaBits);
++      //kopper_init_drawable(drawable, isPixmap, visual->alphaBits);
+       break;
+    }
+ 
+@@ -212,8 +214,8 @@ dri_destroy_drawable(struct dri_drawable *drawable)
+    /* Notify the st manager that this drawable is no longer valid */
+    st_api_destroy_drawable(&drawable->base);
+ 
+-   if (screen->type == DRI_SCREEN_KOPPER)
+-      kopper_destroy_drawable(drawable);
++//   if (screen->type == DRI_SCREEN_KOPPER)
++//      kopper_destroy_drawable(drawable);
+ 
+    FREE(drawable->damage_rects);
+    FREE(drawable);
+@@ -309,12 +311,6 @@ dri_set_tex_buffer2(struct dri_context *ctx, GLint target,
+    }
+ }
+ 
+-const __DRItexBufferExtension driTexBufferExtension = {
+-   .base = { __DRI_TEX_BUFFER, 2 },
+-
+-   .setTexBuffer2      = dri_set_tex_buffer2,
+-};
+-
+ /**
+  * Get the format and binding of an attachment.
+  */
+diff --git a/src/gallium/frontends/dri/dri_screen.c b/src/gallium/frontends/dri/dri_screen.c
+index 1f1748896e5..de29a36acb6 100644
+--- a/src/gallium/frontends/dri/dri_screen.c
++++ b/src/gallium/frontends/dri/dri_screen.c
+@@ -29,9 +29,11 @@
+  * Author: Jakob Bornecrantz <wallbraker@gmail.com>
+  */
+ 
++#define _WINDOWS_
+ #include "dri_screen.h"
+ #include "dri_context.h"
+ #include "dri_helpers.h"
++#undef _WINDOWS_
+ 
+ #include "util/u_inlines.h"
+ #include "pipe/p_screen.h"
+diff --git a/src/gallium/frontends/dri/dri_util.c b/src/gallium/frontends/dri/dri_util.c
+index bca41efba16..c78d157a7b0 100644
+--- a/src/gallium/frontends/dri/dri_util.c
++++ b/src/gallium/frontends/dri/dri_util.c
+@@ -40,10 +40,12 @@
+ 
+ 
+ #include <stdbool.h>
++#define _WINDOWS_
+ #include "dri_util.h"
+ #include "dri_context.h"
+ #include "dri_screen.h"
+ #include "dri_drawable.h"
++#undef _WINDOWS_
+ #include "util/u_endian.h"
+ #include "util/u_memory.h"
+ #include "util/driconf.h"
+@@ -132,7 +134,7 @@ driCreateNewScreen3(int scrn, int fd,
+       pscreen = dri2_init_screen(screen, driver_name_is_inferred);
+       break;
+    case DRI_SCREEN_KOPPER:
+-      pscreen = kopper_init_screen(screen, driver_name_is_inferred);
++//      pscreen = kopper_init_screen(screen, driver_name_is_inferred);
+       break;
+    case DRI_SCREEN_SWRAST:
+       pscreen = drisw_init_screen(screen, driver_name_is_inferred);
+@@ -183,6 +185,45 @@ driCreateNewScreen3(int scrn, int fd,
+     return screen;
+ }
+ 
++struct dri_screen *
++driCreateNewScreen2(int scrn, int fd,
++                    const __DRIextension **loader_extensions,
++                    const __DRIextension **driver_extensions,
++                    const struct dri_config ***driver_configs, void *data)
++{
++   return driCreateNewScreen3(scrn, fd, loader_extensions,
++                              DRI_SCREEN_SWRAST,
++                              driver_configs, false, false, data);
++}
++
++/** swrast driver createNewScreen entrypoint. */
++static struct dri_screen *
++driSWRastCreateNewScreen(int scrn, const __DRIextension **extensions,
++                         const struct dri_config ***driver_configs, void *data)
++{
++   return driCreateNewScreen3(scrn, -1, extensions,
++                              DRI_SCREEN_SWRAST,
++                              driver_configs, false, false, data);
++}
++
++static struct dri_screen *
++driSWRastCreateNewScreen2(int scrn, const __DRIextension **extensions,
++                          const __DRIextension **driver_extensions,
++                          const struct dri_config ***driver_configs, void *data)
++{
++   return driCreateNewScreen3(scrn, -1, extensions, DRI_SCREEN_SWRAST,
++                               driver_configs, false, false, data);
++}
++
++static struct dri_screen *
++driSWRastCreateNewScreen3(int scrn, const __DRIextension **extensions,
++                          const __DRIextension **driver_extensions,
++                          const struct dri_config ***driver_configs, bool driver_name_is_inferred, void *data)
++{
++   return driCreateNewScreen3(scrn, -1, extensions, DRI_SCREEN_SWRAST,
++                               driver_configs, driver_name_is_inferred, false, data);
++}
++
+ /**
+  * Destroy the per-screen private information.
+  *
+@@ -202,6 +243,11 @@ void driDestroyScreen(struct dri_screen *psp)
+     }
+ }
+ 
++static const __DRIextension **driGetExtensions(struct dri_screen *psp)
++{
++    return psp->screen_extensions;
++}
++
+ /*@}*/
+ 
+ /* WARNING: HACK: Local defines to avoid pulling glx.h.
+@@ -705,6 +751,14 @@ int driUnbindContext(struct dri_context *ctx)
+ 
+ /*@}*/
+ 
++static struct dri_drawable *
++driCreateNewDrawable(struct dri_screen *screen,
++                     const struct dri_config *config,
++                     void *data)
++{
++  return dri_create_drawable(screen, config, GL_FALSE, data);
++}
++
+ void
+ driDestroyDrawable(struct dri_drawable *drawable)
+ {
+@@ -815,6 +869,28 @@ dri2GalliumConfigQuerys(struct dri_screen *screen, const char *var, char **val)
+     return 0;
+ }
+ 
++#define __DRI_CORE "DRI_Core"
++#define __DRI_CORE_VERSION 3
++/** Core interface */
++const __DRIcoreExtension driCoreExtension = {
++    .base = { __DRI_CORE, __DRI_CORE_VERSION },
++
++    .createNewScreen            = NULL,
++    .destroyScreen              = driDestroyScreen,
++    .getExtensions              = driGetExtensions,
++    .getConfigAttrib            = driGetConfigAttrib,
++    .indexConfigAttrib          = driIndexConfigAttrib,
++    .createNewDrawable          = NULL,
++    .destroyDrawable            = driDestroyDrawable,
++    .swapBuffers                = driSwapBuffers, /* swrast */
++    .swapBuffersWithDamage      = driSwapBuffersWithDamage, /* swrast */
++    .createNewContext           = driCreateNewContext, /* swrast */
++    .copyContext                = driCopyContext,
++    .destroyContext             = driDestroyContext,
++    .bindContext                = driBindContext,
++    .unbindContext              = driUnbindContext
++};
++
+ /**
+  * \brief the DRI2ConfigQueryExtension struct.
+  *
+@@ -864,6 +940,18 @@ driSWRastQueryBufferAge(struct dri_drawable *drawable)
+    return drawable->buffer_age;
+ }
+ 
++const __DRIswrastExtension driSWRastExtension = {
++    .base = { __DRI_SWRAST, __DRI_SWRAST_VERSION },
++
++    .createNewScreen            = driSWRastCreateNewScreen,
++    .createNewDrawable          = driCreateNewDrawable,
++    .createNewContextForAPI     = driCreateNewContextForAPI,
++    .createContextAttribs       = driCreateContextAttribs,
++    .createNewScreen2           = driSWRastCreateNewScreen2,
++    .queryBufferAge             = driSWRastQueryBufferAge,
++    .createNewScreen3           = driSWRastCreateNewScreen3,
++};
++
+ /*
+  * Note: the first match is returned, which is important for formats like
+  * __DRI_IMAGE_FORMAT_R8 which maps to both MESA_FORMAT_{R,L}_UNORM8
+diff --git a/src/gallium/frontends/dri/dri_util.h b/src/gallium/frontends/dri/dri_util.h
+index 7458575bf25..9f7e151f5e7 100644
+--- a/src/gallium/frontends/dri/dri_util.h
++++ b/src/gallium/frontends/dri/dri_util.h
+@@ -64,6 +64,12 @@ enum dri_screen_type {
+    DRI_SCREEN_KMS_SWRAST,
+ };
+ 
++/**
++ * Extensions.
++ */
++extern const __DRIcoreExtension driCoreExtension;
++extern const __DRIswrastExtension driSWRastExtension;
++
+ /**
+  * Description of the attributes used to create a config.
+  *
+@@ -112,6 +118,11 @@ driCreateNewScreen3(int scrn, int fd,
+                     enum dri_screen_type type,
+                     const struct dri_config ***driver_configs, bool driver_name_is_inferred,
+                     bool has_multibuffer, void *data);
++PUBLIC struct dri_screen *
++driCreateNewScreen2(int scrn, int fd,
++                    const __DRIextension **loader_extensions,
++                    const __DRIextension **driver_extensions,
++                    const struct dri_config ***driver_configs, void *data);
+ PUBLIC struct dri_context *
+ driCreateContextAttribs(struct dri_screen *psp, int api,
+                         const struct dri_config *config,
+diff --git a/src/gallium/frontends/dri/drisw.c b/src/gallium/frontends/dri/drisw.c
+index 4590b57e626..52d82eaae07 100644
+--- a/src/gallium/frontends/dri/drisw.c
++++ b/src/gallium/frontends/dri/drisw.c
+@@ -648,4 +648,38 @@ driswCopySubBuffer(struct dri_drawable *drawable, int x, int y, int w, int h)
+    drisw_copy_sub_buffer(drawable, x, y, w, h);
+ }
+ 
++/* for swrast only */
++#define __DRI_COPY_SUB_BUFFER "DRI_CopySubBuffer"
++#define __DRI_COPY_SUB_BUFFER_VERSION 1
++typedef struct __DRIcopySubBufferExtensionRec	__DRIcopySubBufferExtension;
++struct __DRIcopySubBufferExtensionRec {
++    __DRIextension base;
++    void (*copySubBuffer)(struct dri_drawable *drawable, int x, int y, int w, int h);
++};
++
++const __DRIcopySubBufferExtension driSWCopySubBufferExtension = {
++   .base = { __DRI_COPY_SUB_BUFFER, 1 },
++
++   .copySubBuffer               = driswCopySubBuffer,
++};
++
++static const __DRImesaCoreExtension mesaCoreExtension = {
++   .base = { __DRI_MESA, 2 },
++   .version_string = MESA_INTERFACE_VERSION_STRING,
++//   .createNewScreen = driCreateNewScreen2,
++   .createContext = driCreateContextAttribs,
++   .initScreen = drisw_init_screen,
++   .createNewScreen3 = driCreateNewScreen3,
++};
++
++/* This is the table of extensions that the loader will dlsym() for. */
++const __DRIextension *galliumsw_driver_extensions[] = {
++    &driCoreExtension.base,
++    &mesaCoreExtension.base,
++    &driSWRastExtension.base,
++    &driSWCopySubBufferExtension.base,
++    &gallium_config_options.base,
++    NULL
++};
++
+ /* vim: set sw=3 ts=8 sts=3 expandtab: */
+diff --git a/src/gallium/include/mesa_interface.h b/src/gallium/include/mesa_interface.h
+index 36317511b2f..15c30b4c1e5 100644
+--- a/src/gallium/include/mesa_interface.h
++++ b/src/gallium/include/mesa_interface.h
+@@ -538,12 +538,11 @@ typedef struct dri_screen *
+                              const struct dri_config ***driver_configs,
+                              void *loaderPrivate);
+ typedef struct dri_screen *
+-(*__DRIcreateNewScreen3Func)(int screen, int fd,
+-                             const __DRIextension **extensions,
+-                             const __DRIextension **driver_extensions,
+-                             const struct dri_config ***driver_configs,
+-                             bool implicit,
+-                             void *loaderPrivate);
++(*__DRIcreateNewScreen3Func)(int scrn, int fd,
++                    const __DRIextension **loader_extensions,
++                    enum dri_screen_type type,
++                    const struct dri_config ***driver_configs, bool driver_name_is_inferred,
++                    bool has_multibuffer, void *data);
+ 
+ typedef struct dri_drawable *
+ (*__DRIcreateNewDrawableFunc)(struct dri_screen *screen,
+@@ -1542,7 +1541,7 @@ typedef struct {
+    __DRIcreateContextAttribsFunc createContext;
+ 
+    /* driver function for finishing initialization inside createNewScreen(). */
+-   const struct dri_config **(*initScreen)(struct dri_screen *screen, bool driver_name_is_inferred);
++   struct pipe_screen *(*initScreen)(struct dri_screen *screen, bool driver_name_is_inferred);
+ 
+    int (*queryCompatibleRenderOnlyDeviceFd)(int kms_only_fd);
+ 
+@@ -1556,4 +1555,77 @@ typedef struct {
+    __DRIcreateNewScreen3Func createNewScreen3;
+ } __DRImesaCoreExtension;
+ 
++/**
++ * This extension provides alternative screen, drawable and context constructors
++ * for swrast DRI functionality.  This is used in conjunction with the core
++ * extension.  Version 1 is required by the X server, and version 3 is used.
++ */
++#define __DRI_SWRAST "DRI_SWRast"
++#define __DRI_SWRAST_VERSION 6
++
++typedef struct __DRIswrastExtensionRec		__DRIswrastExtension;
++struct __DRIswrastExtensionRec {
++    __DRIextension base;
++
++    struct dri_screen *(*createNewScreen)(int screen,
++				    const __DRIextension **extensions,
++				    const struct dri_config ***driver_configs,
++				    void *loaderPrivate);
++
++    struct dri_drawable *(*createNewDrawable)(struct dri_screen *screen,
++					const struct dri_config *config,
++					void *loaderPrivate);
++
++   /* Since version 2 */
++   struct dri_context *(*createNewContextForAPI)(struct dri_screen *screen,
++                                           int api,
++                                           const struct dri_config *config,
++                                           struct dri_context *shared,
++                                           void *data);
++
++   /**
++    * Create a context for a particular API with a set of attributes
++    *
++    * \since version 3
++    *
++    * \sa __DRIdri2ExtensionRec::createContextAttribs
++    */
++   struct dri_context *(*createContextAttribs)(struct dri_screen *screen,
++					 int api,
++					 const struct dri_config *config,
++					 struct dri_context *shared,
++					 unsigned num_attribs,
++					 const uint32_t *attribs,
++					 unsigned *error,
++					 void *loaderPrivate);
++
++   /**
++    * createNewScreen() with the driver extensions passed in.
++    *
++    * \since version 4
++    */
++   struct dri_screen *(*createNewScreen2)(int screen,
++                                    const __DRIextension **loader_extensions,
++                                    const __DRIextension **driver_extensions,
++                                    const struct dri_config ***driver_configs,
++                                    void *loaderPrivate);
++   /**
++    * \since version 5
++   */
++   int (*queryBufferAge)(struct dri_drawable *drawable);
++
++   /**
++    * createNewScreen() with the driver extensions passed in and driver_name_is_inferred load flag.
++    *
++    * \since version 6
++    */
++   struct dri_screen *(*createNewScreen3)(int screen,
++                                    const __DRIextension **loader_extensions,
++                                    const __DRIextension **driver_extensions,
++                                    const struct dri_config ***driver_configs,
++                                    bool driver_name_is_inferred,
++                                    void *loaderPrivate);
++
++};
++
+ #endif /* MESA_INTERFACE_H */
+diff --git a/src/gallium/targets/dri/dri_target.c b/src/gallium/targets/dri/dri_target.c
+index 49e9aecd933..ce9fd278afe 100644
+--- a/src/gallium/targets/dri/dri_target.c
++++ b/src/gallium/targets/dri/dri_target.c
+@@ -2,3 +2,154 @@
+  
+ #include "target-helpers/drm_helper.h"
+ #include "target-helpers/sw_helper.h"
++
++#include "dri_screen.h"
++
++#define DEFINE_LOADER_DRM_ENTRYPOINT(drivername)                          \
++PUBLIC const __DRIextension **__driDriverGetExtensions_##drivername(void);       \
++PUBLIC const __DRIextension **__driDriverGetExtensions_##drivername(void) \
++{                                                                         \
++   return galliumdrm_driver_extensions;                                   \
++}
++
++#if defined(GALLIUM_SOFTPIPE)
++
++PUBLIC const __DRIextension **__driDriverGetExtensions_swrast(void);
++
++PUBLIC const __DRIextension **__driDriverGetExtensions_swrast(void)
++{
++   return galliumsw_driver_extensions;
++}
++
++#if defined(HAVE_LIBDRM)
++
++const __DRIextension **__driDriverGetExtensions_kms_swrast(void);
++
++PUBLIC const __DRIextension **__driDriverGetExtensions_kms_swrast(void)
++{
++   return dri_swrast_kms_driver_extensions;
++}
++
++#endif
++#endif
++
++#if defined(GALLIUM_I915)
++DEFINE_LOADER_DRM_ENTRYPOINT(i915)
++#endif
++
++#if defined(GALLIUM_IRIS)
++DEFINE_LOADER_DRM_ENTRYPOINT(iris)
++#endif
++
++#if defined(GALLIUM_CROCUS)
++DEFINE_LOADER_DRM_ENTRYPOINT(crocus)
++#endif
++
++#if defined(GALLIUM_NOUVEAU)
++DEFINE_LOADER_DRM_ENTRYPOINT(nouveau)
++#endif
++
++#if defined(GALLIUM_R300)
++DEFINE_LOADER_DRM_ENTRYPOINT(r300)
++#endif
++
++#if defined(GALLIUM_R600)
++DEFINE_LOADER_DRM_ENTRYPOINT(r600)
++#endif
++
++#if defined(GALLIUM_RADEONSI)
++DEFINE_LOADER_DRM_ENTRYPOINT(radeonsi)
++#endif
++
++#if defined(GALLIUM_VMWGFX)
++DEFINE_LOADER_DRM_ENTRYPOINT(vmwgfx)
++#endif
++
++#if defined(GALLIUM_FREEDRENO)
++DEFINE_LOADER_DRM_ENTRYPOINT(msm)
++DEFINE_LOADER_DRM_ENTRYPOINT(kgsl)
++#endif
++
++#if defined(GALLIUM_VIRGL) || (defined(GALLIUM_FREEDRENO) && !defined(PIPE_LOADER_DYNAMIC))
++DEFINE_LOADER_DRM_ENTRYPOINT(virtio_gpu)
++#endif
++
++#if defined(GALLIUM_V3D)
++DEFINE_LOADER_DRM_ENTRYPOINT(v3d)
++#endif
++
++#if defined(GALLIUM_VC4)
++DEFINE_LOADER_DRM_ENTRYPOINT(vc4)
++#endif
++
++#if defined(GALLIUM_PANFROST)
++DEFINE_LOADER_DRM_ENTRYPOINT(panfrost)
++DEFINE_LOADER_DRM_ENTRYPOINT(panthor)
++#endif
++
++#if defined(GALLIUM_ASAHI)
++DEFINE_LOADER_DRM_ENTRYPOINT(asahi)
++#endif
++
++#if defined(GALLIUM_ETNAVIV)
++DEFINE_LOADER_DRM_ENTRYPOINT(etnaviv)
++#endif
++
++#if defined(GALLIUM_TEGRA)
++DEFINE_LOADER_DRM_ENTRYPOINT(tegra);
++#endif
++
++#if defined(GALLIUM_KMSRO)
++DEFINE_LOADER_DRM_ENTRYPOINT(armada_drm)
++DEFINE_LOADER_DRM_ENTRYPOINT(exynos)
++DEFINE_LOADER_DRM_ENTRYPOINT(gm12u320)
++DEFINE_LOADER_DRM_ENTRYPOINT(hdlcd)
++DEFINE_LOADER_DRM_ENTRYPOINT(hx8357d)
++DEFINE_LOADER_DRM_ENTRYPOINT(ili9163)
++DEFINE_LOADER_DRM_ENTRYPOINT(ili9225)
++DEFINE_LOADER_DRM_ENTRYPOINT(ili9341)
++DEFINE_LOADER_DRM_ENTRYPOINT(ili9486)
++DEFINE_LOADER_DRM_ENTRYPOINT(imx_drm)
++DEFINE_LOADER_DRM_ENTRYPOINT(imx_dcss)
++DEFINE_LOADER_DRM_ENTRYPOINT(imx_lcdif)
++DEFINE_LOADER_DRM_ENTRYPOINT(ingenic_drm)
++DEFINE_LOADER_DRM_ENTRYPOINT(kirin)
++DEFINE_LOADER_DRM_ENTRYPOINT(komeda)
++DEFINE_LOADER_DRM_ENTRYPOINT(mali_dp)
++DEFINE_LOADER_DRM_ENTRYPOINT(mcde)
++DEFINE_LOADER_DRM_ENTRYPOINT(mediatek)
++DEFINE_LOADER_DRM_ENTRYPOINT(meson)
++DEFINE_LOADER_DRM_ENTRYPOINT(mi0283qt)
++DEFINE_LOADER_DRM_ENTRYPOINT(mxsfb_drm)
++DEFINE_LOADER_DRM_ENTRYPOINT(panel_mipi_dbi)
++DEFINE_LOADER_DRM_ENTRYPOINT(pl111)
++DEFINE_LOADER_DRM_ENTRYPOINT(rcar_du)
++DEFINE_LOADER_DRM_ENTRYPOINT(repaper)
++DEFINE_LOADER_DRM_ENTRYPOINT(rockchip)
++DEFINE_LOADER_DRM_ENTRYPOINT(rzg2l_du)
++DEFINE_LOADER_DRM_ENTRYPOINT(ssd130x)
++DEFINE_LOADER_DRM_ENTRYPOINT(st7586)
++DEFINE_LOADER_DRM_ENTRYPOINT(st7735r)
++DEFINE_LOADER_DRM_ENTRYPOINT(sti)
++DEFINE_LOADER_DRM_ENTRYPOINT(stm)
++DEFINE_LOADER_DRM_ENTRYPOINT(sun4i_drm)
++DEFINE_LOADER_DRM_ENTRYPOINT(udl)
++DEFINE_LOADER_DRM_ENTRYPOINT(zynqmp_dpsub)
++#endif
++
++#if defined(GALLIUM_LIMA)
++DEFINE_LOADER_DRM_ENTRYPOINT(lima)
++#endif
++
++#if defined(GALLIUM_ZINK)
++const __DRIextension **__driDriverGetExtensions_zink(void);
++
++PUBLIC const __DRIextension **__driDriverGetExtensions_zink(void)
++{
++   return debug_get_bool_option("LIBGL_KOPPER_DISABLE", false) ? galliumdrm_driver_extensions : galliumvk_driver_extensions;
++}
++#endif
++
++#if defined(GALLIUM_D3D12)
++DEFINE_LOADER_DRM_ENTRYPOINT(d3d12);
++#endif
+diff --git a/src/gallium/targets/dril/dril_target.c b/src/gallium/targets/dril/dril_target.c
+index 339e9376c3d..b3f81d5bcaf 100644
+--- a/src/gallium/targets/dril/dril_target.c
++++ b/src/gallium/targets/dril/dril_target.c
+@@ -267,7 +267,7 @@ drilDestroyDrawable(__DRIdrawable *pdp)
+ }
+ 
+ static const __DRIcoreExtension drilCoreExtension = {
+-   .base = { __DRI_CORE, 1 },
++   .base = { __DRI_CORE, 3 },
+ 
+    .destroyScreen       = drilDestroyScreen,
+    .getExtensions       = drilGetExtensions,
+@@ -342,107 +342,6 @@ add_srgb_config(struct gl_config **configs, unsigned c, enum pipe_format last_pf
+ static const __DRIconfig **
+ init_dri2_configs(int fd)
+ {
+-   void *egl = NULL;
+-   struct gl_config **configs = NULL;
+-   unsigned c = 0;
+-   enum pipe_format last_pformat = 0;
+-   unsigned last_start = 0;
+-
+-   /* dlopen/dlsym to avoid linkage */
+-   egl = dlopen("libEGL.so.1", RTLD_LAZY | RTLD_LOCAL);
+-   if (!egl)
+-      return false;
+-
+-   void * (*peglGetProcAddress)(const char *) = dlsym(egl, "eglGetProcAddress");
+-   EGLDisplay (*peglGetPlatformDisplayEXT)(EGLenum, void *, const EGLint *) = peglGetProcAddress("eglGetPlatformDisplayEXT");
+-   EGLBoolean (*peglInitialize)(EGLDisplay, int*, int*) = peglGetProcAddress("eglInitialize");
+-   EGLBoolean (*peglTerminate)(EGLDisplay) = peglGetProcAddress("eglTerminate");
+-   EGLBoolean (*peglGetConfigs)(EGLDisplay, EGLConfig*, EGLint, EGLint*) = peglGetProcAddress("eglGetConfigs");
+-   EGLBoolean (*peglGetConfigAttrib)(EGLDisplay, EGLConfig, EGLint, EGLint *) = peglGetProcAddress("eglGetConfigAttrib");
+-   const char *(*peglQueryString)(EGLDisplay, EGLint) = peglGetProcAddress("eglQueryString");
+-
+-   struct gbm_device *gbm = NULL;
+-   if (fd != -1) {
+-      /* try opening GBM for hardware driver info */
+-      gbm = gbm_create_device(fd);
+-      if (!gbm)
+-         goto out;
+-   }
+-
+-   EGLDisplay dpy = peglGetPlatformDisplayEXT(EGL_PLATFORM_GBM_MESA, gbm ? gbm : EGL_DEFAULT_DISPLAY, NULL);
+-   if (!dpy)
+-      goto out_gbm;
+-   int maj, min;
+-   if (!peglInitialize(dpy, &maj, &min))
+-      goto out_gbm;
+-
+-   const char *egl_extension_list = peglQueryString(dpy, EGL_EXTENSIONS);
+-   bool has_srgb = strstr(egl_extension_list, "EGL_KHR_gl_colorspace");
+-
+-   int num_configs = 0;
+-   EGLConfig *eglconfigs = NULL;
+-   if (!peglGetConfigs(dpy, NULL, 0, &num_configs))
+-      goto out_egl;
+-   eglconfigs = malloc(sizeof(EGLConfig) * num_configs);
+-   /* overestimate: num_configs * doubleBuffer * sRGB + NULL */
+-   configs = calloc(num_configs * 2 * 2 + 1, sizeof(struct gl_config));
+-   if (!peglGetConfigs(dpy, eglconfigs, num_configs, &num_configs))
+-      goto out_egl;
+-
+-   for (unsigned i = 0; i < num_configs; i++) {
+-      /* verify that this is the right format */
+-      EGLint format, depth, stencil, samples;
+-
+-      if (!peglGetConfigAttrib(dpy, eglconfigs[i], EGL_NATIVE_VISUAL_ID, &format) ||
+-          !peglGetConfigAttrib(dpy, eglconfigs[i], EGL_DEPTH_SIZE, &depth) ||
+-          !peglGetConfigAttrib(dpy, eglconfigs[i], EGL_STENCIL_SIZE, &stencil) ||
+-          !peglGetConfigAttrib(dpy, eglconfigs[i], EGL_SAMPLES, &samples))
+-         continue;
+-
+-      enum pipe_format pformat = fourcc_to_pipe_format(format);
+-
+-      /* srgb configs go after base configs */
+-      if (last_pformat && has_srgb && pformat != last_pformat)
+-         c = add_srgb_config(configs, c, last_pformat, last_start);
+-      /* tracking for the number of srgb configs to create */
+-      if (pformat != last_pformat)
+-         last_start = c;
+-
+-      for (unsigned j = 0; j < ARRAY_SIZE(drilConfigs); j++) {
+-         unsigned depth_size = SIZE(drilConfigs[j].zs_format, ZS, 0);
+-         unsigned stencil_size = SIZE(drilConfigs[j].zs_format, ZS, 1);
+-         /* only copy supported configs */
+-         if (pformat != drilConfigs[j].color_format || depth != depth_size || stencil != stencil_size)
+-            continue;
+-
+-         /* always create single-buffered and double-buffered */
+-         for (unsigned k = 0; k < 2; k++) {
+-            configs[c] = mem_dup(&drilConfigs[j], sizeof(drilConfigs[j]));
+-
+-            struct gl_config *cfg = configs[c++];
+-            cfg->samples = samples;
+-            cfg->doubleBufferMode = k;
+-         }
+-         break;
+-      }
+-      last_pformat = pformat;
+-   }
+-   /* check last format for srgbness too */
+-   if (c && has_srgb)
+-      c = add_srgb_config(configs, c, last_pformat, last_start);
+-out_egl:
+-   free(eglconfigs);
+-   /* don't forget cleanup */
+-   peglTerminate(dpy);
+-
+-out_gbm:
+-   if (gbm)
+-      gbm_device_destroy(gbm);
+-out:
+-   dlclose(egl);
+-   if (c)
+-      return (void*)configs;
+-   free(configs);
+    return NULL;
+ }
+ 
+@@ -522,7 +421,7 @@ drilSWQueryBufferAge(__DRIdrawable *pdp)
+ 
+ 
+ static const __DRIswrastExtension drilSWRastExtension = {
+-   .base = { __DRI_SWRAST, 5 },
++   .base = { __DRI_SWRAST, 6 },
+ 
+    .createNewScreen = drilSWCreateNewScreen,
+    .createNewDrawable = drilCreateNewDrawable,
+@@ -555,20 +454,20 @@ const __DRIextension *__driDriverExtensions[] = {
+ #include "target-helpers/sw_helper.h"
+ 
+ #define DEFINE_LOADER_DRM_ENTRYPOINT(drivername)                          \
+-const __DRIextension **__driDriverGetExtensions_##drivername(void);       \
++PUBLIC const __DRIextension **__driDriverGetExtensions_##drivername(void);       \
+ PUBLIC const __DRIextension **__driDriverGetExtensions_##drivername(void) \
+ {                                                                         \
+    return __driDriverExtensions;                                   \
+ }
+ 
+-const __DRIextension **__driDriverGetExtensions_swrast(void);
++PUBLIC const __DRIextension **__driDriverGetExtensions_swrast(void);
+ 
+ PUBLIC const __DRIextension **__driDriverGetExtensions_swrast(void)
+ {
+    return __driDriverExtensions;
+ }
+ 
+-const __DRIextension **__driDriverGetExtensions_kms_swrast(void);
++PUBLIC const __DRIextension **__driDriverGetExtensions_kms_swrast(void);
+ 
+ PUBLIC const __DRIextension **__driDriverGetExtensions_kms_swrast(void)
+ {
+diff --git a/src/gbm/backends/dri/gbm_dri.c b/src/gbm/backends/dri/gbm_dri.c
+index a51e3cb3b8d..1979e8d8920 100644
+--- a/src/gbm/backends/dri/gbm_dri.c
++++ b/src/gbm/backends/dri/gbm_dri.c
+@@ -73,7 +73,7 @@ dri_validate_egl_image(void *image, void *data)
+    return dri->validate_image(image, dri->lookup_user_data);
+ }
+ 
+-static struct dri_image *
++static __DRIimage *
+ dri_lookup_egl_image_validated(void *image, void *data)
+ {
+    struct gbm_dri_device *dri = data;
+@@ -85,7 +85,7 @@ dri_lookup_egl_image_validated(void *image, void *data)
+ }
+ 
+ static void
+-dri_flush_front_buffer(struct dri_drawable * driDrawable, void *data)
++dri_flush_front_buffer(__DRIdrawable * driDrawable, void *data)
+ {
+    struct gbm_dri_surface *surf = data;
+    struct gbm_dri_device *dri = gbm_dri_device(surf->base.gbm);
+@@ -109,7 +109,7 @@ dri_get_capability(void *loaderPrivate, enum dri_loader_cap cap)
+ }
+ 
+ static int
+-image_get_buffers(struct dri_drawable *driDrawable,
++image_get_buffers(__DRIdrawable *driDrawable,
+                   unsigned int format,
+                   uint32_t *stamp,
+                   void *loaderPrivate,
+@@ -127,7 +127,7 @@ image_get_buffers(struct dri_drawable *driDrawable,
+ }
+ 
+ static void
+-swrast_get_drawable_info(struct dri_drawable *driDrawable,
++swrast_get_drawable_info(__DRIdrawable *driDrawable,
+                          int           *x,
+                          int           *y,
+                          int           *width,
+@@ -143,7 +143,7 @@ swrast_get_drawable_info(struct dri_drawable *driDrawable,
+ }
+ 
+ static void
+-swrast_put_image2(struct dri_drawable *driDrawable,
++swrast_put_image2(__DRIdrawable *driDrawable,
+                   int            op,
+                   int            x,
+                   int            y,
+@@ -163,7 +163,7 @@ swrast_put_image2(struct dri_drawable *driDrawable,
+ }
+ 
+ static void
+-swrast_put_image(struct dri_drawable *driDrawable,
++swrast_put_image(__DRIdrawable *driDrawable,
+                  int            op,
+                  int            x,
+                  int            y,
+@@ -177,7 +177,7 @@ swrast_put_image(struct dri_drawable *driDrawable,
+ }
+ 
+ static void
+-swrast_get_image(struct dri_drawable *driDrawable,
++swrast_get_image(__DRIdrawable *driDrawable,
+                  int            x,
+                  int            y,
+                  int            width,
+@@ -194,6 +194,10 @@ swrast_get_image(struct dri_drawable *driDrawable,
+                          data, surf->dri_private);
+ }
+ 
++static const __DRIuseInvalidateExtension use_invalidate = {
++   .base = { __DRI_USE_INVALIDATE, 1 }
++};
++
+ static const __DRIimageLookupExtension image_lookup_extension = {
+    .base = { __DRI_IMAGE_LOOKUP, 2 },
+ 
+@@ -226,6 +230,7 @@ static const __DRIkopperLoaderExtension kopper_loader_extension = {
+ 
+ static const __DRIextension *gbm_dri_screen_extensions[] = {
+    &image_lookup_extension.base,
++   &use_invalidate.base,
+    &image_loader_extension.base,
+    &swrast_loader_extension.base,
+    &kopper_loader_extension.base,
+@@ -300,37 +305,33 @@ dri_screen_create_sw(struct gbm_dri_device *dri, bool driver_name_is_inferred)
+ }
+ 
+ static const struct gbm_dri_visual gbm_dri_visuals_table[] = {
+-   { GBM_FORMAT_R8, PIPE_FORMAT_R8_UNORM },
+-   { GBM_FORMAT_R16, PIPE_FORMAT_R16_UNORM },
+-   { GBM_FORMAT_GR88, PIPE_FORMAT_R8G8_UNORM },
+-   { GBM_FORMAT_GR1616, PIPE_FORMAT_R16G16_UNORM },
+-   { GBM_FORMAT_ARGB1555, PIPE_FORMAT_B5G5R5A1_UNORM },
+-   { GBM_FORMAT_RGB565, PIPE_FORMAT_B5G6R5_UNORM },
+-   { GBM_FORMAT_BGRX8888, PIPE_FORMAT_X8R8G8B8_UNORM },
+-   { GBM_FORMAT_BGRA8888, PIPE_FORMAT_A8R8G8B8_UNORM },
+-   { GBM_FORMAT_RGBX8888, PIPE_FORMAT_X8B8G8R8_UNORM },
+-   { GBM_FORMAT_RGBA8888, PIPE_FORMAT_A8B8G8R8_UNORM },
+-   { GBM_FORMAT_XRGB8888, PIPE_FORMAT_B8G8R8X8_UNORM },
+-   { GBM_FORMAT_ARGB8888, PIPE_FORMAT_B8G8R8A8_UNORM },
+-   { GBM_FORMAT_XBGR8888, PIPE_FORMAT_R8G8B8X8_UNORM },
+-   { GBM_FORMAT_ABGR8888, PIPE_FORMAT_R8G8B8A8_UNORM },
+-   { GBM_FORMAT_XRGB2101010, PIPE_FORMAT_B10G10R10X2_UNORM },
+-   { GBM_FORMAT_ARGB2101010, PIPE_FORMAT_B10G10R10A2_UNORM },
+-   { GBM_FORMAT_XBGR2101010, PIPE_FORMAT_R10G10B10X2_UNORM },
+-   { GBM_FORMAT_ABGR2101010, PIPE_FORMAT_R10G10B10A2_UNORM },
+-   { GBM_FORMAT_XBGR16161616, PIPE_FORMAT_R16G16B16X16_UNORM },
+-   { GBM_FORMAT_ABGR16161616, PIPE_FORMAT_R16G16B16A16_UNORM },
+-   { GBM_FORMAT_XBGR16161616F, PIPE_FORMAT_R16G16B16X16_FLOAT },
+-   { GBM_FORMAT_ABGR16161616F, PIPE_FORMAT_R16G16B16A16_FLOAT },
++   { GBM_FORMAT_R8, __DRI_IMAGE_FORMAT_R8 },
++   { GBM_FORMAT_R16, __DRI_IMAGE_FORMAT_R16 },
++   { GBM_FORMAT_GR88, __DRI_IMAGE_FORMAT_GR88 },
++   { GBM_FORMAT_GR1616, __DRI_IMAGE_FORMAT_GR1616 },
++   { GBM_FORMAT_ARGB1555, __DRI_IMAGE_FORMAT_ARGB1555 },
++   { GBM_FORMAT_RGB565, __DRI_IMAGE_FORMAT_RGB565 },
++   { GBM_FORMAT_XRGB8888, __DRI_IMAGE_FORMAT_XRGB8888 },
++   { GBM_FORMAT_ARGB8888, __DRI_IMAGE_FORMAT_ARGB8888 },
++   { GBM_FORMAT_XBGR8888, __DRI_IMAGE_FORMAT_XBGR8888 },
++   { GBM_FORMAT_ABGR8888, __DRI_IMAGE_FORMAT_ABGR8888 },
++   { GBM_FORMAT_XRGB2101010, __DRI_IMAGE_FORMAT_XRGB2101010 },
++   { GBM_FORMAT_ARGB2101010, __DRI_IMAGE_FORMAT_ARGB2101010 },
++   { GBM_FORMAT_XBGR2101010, __DRI_IMAGE_FORMAT_XBGR2101010 },
++   { GBM_FORMAT_ABGR2101010, __DRI_IMAGE_FORMAT_ABGR2101010 },
++   { GBM_FORMAT_XBGR16161616, __DRI_IMAGE_FORMAT_XBGR16161616 },
++   { GBM_FORMAT_ABGR16161616, __DRI_IMAGE_FORMAT_ABGR16161616 },
++   { GBM_FORMAT_XBGR16161616F, __DRI_IMAGE_FORMAT_XBGR16161616F },
++   { GBM_FORMAT_ABGR16161616F, __DRI_IMAGE_FORMAT_ABGR16161616F },
+ };
+ 
+ static int
+-gbm_format_to_pipe_format(uint32_t gbm_format)
++gbm_format_to_dri_format(uint32_t gbm_format)
+ {
+    gbm_format = core->v0.format_canonicalize(gbm_format);
+    for (size_t i = 0; i < ARRAY_SIZE(gbm_dri_visuals_table); i++) {
+       if (gbm_dri_visuals_table[i].gbm_format == gbm_format)
+-         return gbm_dri_visuals_table[i].pipe_format;
++         return gbm_dri_visuals_table[i].dri_image_format;
+    }
+ 
+    return 0;
+@@ -348,7 +349,7 @@ gbm_dri_is_format_supported(struct gbm_device *gbm,
+       return 0;
+ 
+    format = core->v0.format_canonicalize(format);
+-   if (gbm_format_to_pipe_format(format) == 0)
++   if (gbm_format_to_dri_format(format) == 0)
+       return 0;
+ 
+    /* If there is no query, fall back to the small table which was originally
+@@ -384,7 +385,7 @@ gbm_dri_get_format_modifier_plane_count(struct gbm_device *gbm,
+       return -1;
+ 
+    format = core->v0.format_canonicalize(format);
+-   if (gbm_format_to_pipe_format(format) == 0)
++   if (gbm_format_to_dri_format(format) == 0)
+       return -1;
+ 
+    if (!dri2_query_dma_buf_format_modifier_attribs(dri->screen, format, modifier,
+@@ -425,7 +426,7 @@ gbm_dri_bo_get_fd(struct gbm_bo *_bo)
+ }
+ 
+ static int
+-get_number_planes(struct gbm_dri_device *dri, struct dri_image *image)
++get_number_planes(struct gbm_dri_device *dri, __DRIimage *image)
+ {
+    int num_planes = 0;
+ 
+@@ -470,7 +471,7 @@ gbm_dri_bo_get_handle_for_plane(struct gbm_bo *_bo, int plane)
+       return ret;
+    }
+ 
+-   struct dri_image *image = dri2_from_planar(bo->image, plane, NULL);
++   __DRIimage *image = dri2_from_planar(bo->image, plane, NULL);
+    if (image) {
+       dri2_query_image(image, __DRI_IMAGE_ATTRIB_HANDLE, &ret.s32);
+       dri2_destroy_image(image);
+@@ -509,7 +510,7 @@ gbm_dri_bo_get_plane_fd(struct gbm_bo *_bo, int plane)
+       return -1;
+    }
+ 
+-   struct dri_image *image = dri2_from_planar(bo->image, plane, NULL);
++   __DRIimage *image = dri2_from_planar(bo->image, plane, NULL);
+    if (image) {
+       dri2_query_image(image, __DRI_IMAGE_ATTRIB_FD, &fd);
+       dri2_destroy_image(image);
+@@ -526,7 +527,7 @@ gbm_dri_bo_get_stride(struct gbm_bo *_bo, int plane)
+ {
+    struct gbm_dri_device *dri = gbm_dri_device(_bo->gbm);
+    struct gbm_dri_bo *bo = gbm_dri_bo(_bo);
+-   struct dri_image *image;
++   __DRIimage *image;
+    int stride = 0;
+ 
+    if (!dri->has_dmabuf_import) {
+@@ -576,7 +577,7 @@ gbm_dri_bo_get_offset(struct gbm_bo *_bo, int plane)
+       return 0;
+    }
+ 
+-   struct dri_image *image = dri2_from_planar(bo->image, plane, NULL);
++   __DRIimage *image = dri2_from_planar(bo->image, plane, NULL);
+    if (image) {
+       dri2_query_image(image, __DRI_IMAGE_ATTRIB_OFFSET, &offset);
+       dri2_destroy_image(image);
+@@ -639,7 +640,7 @@ gbm_dri_bo_import(struct gbm_device *gbm,
+ {
+    struct gbm_dri_device *dri = gbm_dri_device(gbm);
+    struct gbm_dri_bo *bo;
+-   struct dri_image *image;
++   __DRIimage *image;
+    unsigned dri_use = 0;
+    int gbm_format;
+ 
+@@ -860,7 +861,7 @@ gbm_dri_bo_create(struct gbm_device *gbm,
+ {
+    struct gbm_dri_device *dri = gbm_dri_device(gbm);
+    struct gbm_dri_bo *bo;
+-   int pipe_format;
++   int dri_format;
+    unsigned dri_use = 0;
+    uint64_t *mods_comp = NULL;
+    uint64_t *mods_filtered = NULL;
+@@ -880,8 +881,8 @@ gbm_dri_bo_create(struct gbm_device *gbm,
+    bo->base.v0.height = height;
+    bo->base.v0.format = format;
+ 
+-   pipe_format = gbm_format_to_pipe_format(format);
+-   if (pipe_format == 0) {
++   dri_format = gbm_format_to_dri_format(format);
++   if (dri_format == 0) {
+       errno = EINVAL;
+       goto failed;
+    }
+@@ -894,8 +895,14 @@ gbm_dri_bo_create(struct gbm_device *gbm,
+       dri_use |= __DRI_IMAGE_USE_LINEAR;
+    if (usage & GBM_BO_USE_PROTECTED)
+       dri_use |= __DRI_IMAGE_USE_PROTECTED;
+-   if (usage & GBM_BO_USE_FRONT_RENDERING)
++   if (usage & GBM_BO_USE_FRONT_RENDERING) {
++      assert (!(usage & GBM_BO_EXPLICIT_FLUSH));
+       dri_use |= __DRI_IMAGE_USE_FRONT_RENDERING;
++   }
++   if (usage & GBM_BO_EXPLICIT_FLUSH) {
++      assert (!(usage & GBM_BO_USE_FRONT_RENDERING));
++      dri_use |= __DRI_IMAGE_USE_BACKBUFFER;
++   }
+ 
+    /* Gallium drivers requires shared in order to get the handle/stride */
+    dri_use |= __DRI_IMAGE_USE_SHARE;
+@@ -982,7 +989,7 @@ gbm_dri_bo_create(struct gbm_device *gbm,
+    }
+ 
+    bo->image = dri_create_image_with_modifiers(dri->screen, width, height,
+-                                       pipe_format, dri_use,
++                                       dri_format, dri_use,
+                                        mods_filtered ? mods_filtered : modifiers,
+                                        mods_filtered ? count_filtered : count,
+                                        bo);
+@@ -1073,17 +1080,11 @@ gbm_dri_surface_create(struct gbm_device *gbm,
+ 		       uint32_t format, uint32_t flags,
+                        const uint64_t *modifiers, const unsigned count)
+ {
+-   struct gbm_dri_device *dri = gbm_dri_device(gbm);
+    struct gbm_dri_surface *surf;
+ 
+    if (count)
+       assert(modifiers);
+ 
+-   if (count > 0 && !dri->screen->base.screen->resource_create_with_modifiers) {
+-      errno = ENOSYS;
+-      return NULL;
+-   }
+-
+    /* It's acceptable to create an image with INVALID modifier in the list,
+     * but it cannot be on the only modifier (since it will certainly fail
+     * later). While we could easily catch this after modifier creation, doing
+@@ -1105,7 +1106,7 @@ gbm_dri_surface_create(struct gbm_device *gbm,
+    surf->base.v0.width = width;
+    surf->base.v0.height = height;
+    surf->base.v0.format = core->v0.format_canonicalize(format);
+-   surf->base.v0.flags = flags;
++   surf->base.v0.flags = flags | GBM_BO_EXPLICIT_FLUSH;
+    if (!modifiers) {
+       assert(!count);
+       return &surf->base;
+@@ -1148,7 +1149,7 @@ dri_destroy(struct gbm_device *gbm)
+ 
+    driDestroyScreen(dri->screen);
+    for (i = 0; dri->driver_configs[i]; i++)
+-      free((struct dri_config *) dri->driver_configs[i]);
++      free((__DRIconfig *) dri->driver_configs[i]);
+    free(dri->driver_configs);
+    free(dri->driver_name);
+ 
+@@ -1207,12 +1208,12 @@ dri_device_create(int fd, uint32_t gbm_backend_version)
+    if (ret)
+       goto err_dri;
+ 
+-   struct dri_screen *screen = dri->screen;
++   struct dri_screen *screen = dri_screen(dri->screen);
+    struct pipe_screen *pscreen = screen->base.screen;
+ #ifdef HAVE_LIBDRM
+-   if (pscreen->caps.dmabuf & DRM_PRIME_CAP_IMPORT)
++   if (pscreen->get_param(pscreen, PIPE_CAP_DMABUF) & DRM_PRIME_CAP_IMPORT)
+       dri->has_dmabuf_import = true;
+-   if (pscreen->caps.dmabuf & DRM_PRIME_CAP_EXPORT)
++   if (pscreen->get_param(pscreen, PIPE_CAP_DMABUF) & DRM_PRIME_CAP_EXPORT)
+       dri->has_dmabuf_export = true;
+ #endif
+    dri->has_compression_modifiers = pscreen->query_compression_rates &&
+diff --git a/src/gbm/backends/dri/gbm_driint.h b/src/gbm/backends/dri/gbm_driint.h
+index 9b324aeaf12..4ae29114426 100644
+--- a/src/gbm/backends/dri/gbm_driint.h
++++ b/src/gbm/backends/dri/gbm_driint.h
+@@ -43,7 +43,7 @@ struct gbm_dri_bo;
+ 
+ struct gbm_dri_visual {
+    uint32_t gbm_format;
+-   int pipe_format;
++   int dri_image_format;
+ };
+ 
+ struct gbm_dri_device {
+@@ -56,25 +56,25 @@ struct gbm_dri_device {
+    bool has_dmabuf_export;
+    bool has_compression_modifiers;
+ 
+-   struct dri_screen *screen;
+-   struct dri_context *context;
++   __DRIscreen *screen;
++   __DRIcontext *context;
+    mtx_t mutex;
+ 
+-   const struct dri_config   **driver_configs;
++   const __DRIconfig   **driver_configs;
+    const __DRIextension **loader_extensions;
+ 
+    GLboolean (*validate_image)(void *image, void *data);
+-   struct dri_image *(*lookup_image_validated)(void *image, void *data);
++   __DRIimage *(*lookup_image_validated)(void *image, void *data);
+    void *lookup_user_data;
+ 
+-   void (*flush_front_buffer)(struct dri_drawable * driDrawable, void *data);
+-   int (*image_get_buffers)(struct dri_drawable *driDrawable,
++   void (*flush_front_buffer)(__DRIdrawable * driDrawable, void *data);
++   int (*image_get_buffers)(__DRIdrawable *driDrawable,
+                             unsigned int format,
+                             uint32_t *stamp,
+                             void *loaderPrivate,
+                             uint32_t buffer_mask,
+                             struct __DRIimageList *buffers);
+-   void (*swrast_put_image2)(struct dri_drawable *driDrawable,
++   void (*swrast_put_image2)(__DRIdrawable *driDrawable,
+                              int            op,
+                              int            x,
+                              int            y,
+@@ -83,7 +83,7 @@ struct gbm_dri_device {
+                              int            stride,
+                              char          *data,
+                              void          *loaderPrivate);
+-   void (*swrast_get_image)(struct dri_drawable *driDrawable,
++   void (*swrast_get_image)(__DRIdrawable *driDrawable,
+                             int            x,
+                             int            y,
+                             int            width,
+@@ -100,7 +100,7 @@ struct gbm_dri_device {
+ struct gbm_dri_bo {
+    struct gbm_bo base;
+ 
+-   struct dri_image *image;
++   __DRIimage *image;
+ 
+    /* Used for cursors and the swrast front BO */
+    uint32_t handle, size;
+diff --git a/src/gbm/backends/dri/meson.build b/src/gbm/backends/dri/meson.build
+index 9b5d13e9db8..e2082bf00e7 100644
+--- a/src/gbm/backends/dri/meson.build
++++ b/src/gbm/backends/dri/meson.build
+@@ -8,7 +8,7 @@ if with_platform_wayland
+   incs_gbm_dri += inc_wayland_drm
+ endif
+ 
+-shared_library(
++libgbm_dri = shared_library(
+   'dri_gbm',
+   files('gbm_dri.c', 'gbm_driint.h'),
+   include_directories : [incs_gbm, incs_gbm_dri, inc_st_dri, inc_gallium_aux],
+diff --git a/src/gbm/main/gbm.h b/src/gbm/main/gbm.h
+index 9c680f65b95..be529cd272d 100644
+--- a/src/gbm/main/gbm.h
++++ b/src/gbm/main/gbm.h
+@@ -330,7 +330,11 @@ enum gbm_bo_flags {
+     */
+    GBM_BO_FIXED_COMPRESSION_12BPC = (13 << 7),
+ 
+-   /* next available value is (1 << 11) */
++   /**
++    * This buffer will be used with an API with well defined transition points
++    * between context internal usage and external visibility.
++    */
++   GBM_BO_EXPLICIT_FLUSH = (1 << 11),
+ };
+ 
+ #define GBM_BO_FIXED_COMPRESSION_MASK (((1 << 11) - 1) & ~((1 << 7) - 1))
+diff --git a/src/loader/loader.c b/src/loader/loader.c
+index e8a9b76913a..ac8b0c0f5aa 100644
+--- a/src/loader/loader.c
++++ b/src/loader/loader.c
+@@ -84,6 +84,8 @@ static void default_logger(int level, const char *fmt, ...)
+ 
+ static loader_logger *log_ = default_logger;
+ 
++#if 0
++
+ int
+ loader_open_device(const char *device_name)
+ {
+@@ -122,18 +124,24 @@ loader_get_kernel_driver_name(int fd)
+    drmFreeVersion(version);
+    return driver;
+ }
++#endif
+ 
+ bool
+ iris_predicate(int fd, const char *driver)
+ {
++#if 0
+    char *kernel_driver = loader_get_kernel_driver_name(fd);
+    bool ret = kernel_driver && (strcmp(kernel_driver, "i915") == 0 ||
+                                 strcmp(kernel_driver, "xe") == 0);
+ 
+    free(kernel_driver);
+    return ret;
++#else
++   return -1;
++#endif
+ }
+ 
++#if 0
+ /* choose zink or nouveau GL */
+ bool
+ nouveau_zink_predicate(int fd, const char *driver)
+@@ -732,6 +740,7 @@ loader_set_logger(loader_logger *logger)
+    log_ = logger;
+ }
+ 
++#endif
+ bool
+ loader_bind_extensions(void *data,
+                        const struct dri_extension_match *matches, size_t num_matches,
+@@ -773,6 +782,7 @@ loader_bind_extensions(void *data,
+ 
+    return ret;
+ }
++#if 0
+ /**
+  * Opens a driver or backend using its name, returning the library handle.
+  *
+@@ -846,3 +856,4 @@ loader_open_driver_lib(const char *driver_name,
+ 
+    return driver;
+ }
++#endif
+diff --git a/src/loader/pci_id_driver_map.h b/src/loader/pci_id_driver_map.h
+index b6febe4f53a..c7aed39aaa5 100644
+--- a/src/loader/pci_id_driver_map.h
++++ b/src/loader/pci_id_driver_map.h
+@@ -60,8 +60,8 @@ static const struct {
+    { 0x1002, "r300", r300_chip_ids, ARRAY_SIZE(r300_chip_ids) },
+    { 0x1002, "r600", r600_chip_ids, ARRAY_SIZE(r600_chip_ids) },
+    { 0x1002, "radeonsi", NULL, -1 },
+-   { 0x10de, "nouveau", NULL, -1, nouveau_zink_predicate },
+-   { 0x10de, "zink", NULL, -1, nouveau_zink_predicate },
++//   { 0x10de, "nouveau", NULL, -1, nouveau_zink_predicate },
++//   { 0x10de, "zink", NULL, -1, nouveau_zink_predicate },
+    { 0x1af4, "virtio_gpu", virtio_gpu_chip_ids, ARRAY_SIZE(virtio_gpu_chip_ids) },
+    { 0x15ad, "vmwgfx", vmwgfx_chip_ids, ARRAY_SIZE(vmwgfx_chip_ids) },
+ };
+diff --git a/src/mapi/glapi/gen/GL3x.xml b/src/mapi/glapi/gen/GL3x.xml
+index 1c38e7723d2..1c26cfd3ec7 100644
+--- a/src/mapi/glapi/gen/GL3x.xml
++++ b/src/mapi/glapi/gen/GL3x.xml
+@@ -28,8 +28,12 @@
+   <enum name="RGB16F"                           value="0x881B"/>
+   <enum name="VERTEX_ATTRIB_ARRAY_INTEGER"      value="0x88FD"/>
+   <enum name="MAX_ARRAY_TEXTURE_LAYERS"         value="0x88FF"/>
+-  <enum name="MIN_PROGRAM_TEXEL_OFFSET"         value="0x8904"/>
+-  <enum name="MAX_PROGRAM_TEXEL_OFFSET"         value="0x8905"/>
++  <enum name="MIN_PROGRAM_TEXEL_OFFSET"         value="0x8904">
++      <size name="Get" mode="get"/>
++  </enum>
++  <enum name="MAX_PROGRAM_TEXEL_OFFSET"         value="0x8905">
++      <size name="Get" mode="get"/>
++  </enum>
+   <enum name="CLAMP_VERTEX_COLOR"               value="0x891A"/>
+   <enum name="CLAMP_FRAGMENT_COLOR"             value="0x891B"/>
+   <enum name="CLAMP_READ_COLOR"                 value="0x891C"/>
+diff --git a/src/mapi/glapi/gen/glX_proto_size.py b/src/mapi/glapi/gen/glX_proto_size.py
+index 5d94d856c44..b369d3dcc95 100644
+--- a/src/mapi/glapi/gen/glX_proto_size.py
++++ b/src/mapi/glapi/gen/glX_proto_size.py
+@@ -254,9 +254,10 @@ class PrintGlxSizeStubs_common(gl_XML.gl_print_base):
+ class PrintGlxSizeStubs_c(PrintGlxSizeStubs_common):
+     def printRealHeader(self):
+         print('')
+-        print('#include <X11/Xfuncproto.h>')
+-        print('#include "util/glheader.h"')
++        print('#include <dix-config.h>')
++        print('')
+         if self.emit_get:
++            print('#include "GL/gl.h"')
+             print('#include "indirect_size_get.h"')
+             print('#include "glxserver.h"')
+             print('#include "indirect_util.h"')
+diff --git a/src/mapi/glapi/gen/gl_API.xml b/src/mapi/glapi/gen/gl_API.xml
+index e356035dd9d..9a1b135795b 100644
+--- a/src/mapi/glapi/gen/gl_API.xml
++++ b/src/mapi/glapi/gen/gl_API.xml
+@@ -183,18 +183,18 @@
+         <size name="Get" mode="get"/>
+     </enum>
+     <enum name="LIGHT_MODEL_LOCAL_VIEWER"      count="1"  value="0x0B51">
+-        <size name="LightModelfv"/>
+-        <size name="LightModeliv"/>
++        <size name="LightModelfv" mode="get"/>
++        <size name="LightModeliv" mode="get"/>
+         <size name="Get" mode="get"/>
+     </enum>
+     <enum name="LIGHT_MODEL_TWO_SIDE"          count="1"  value="0x0B52">
+-        <size name="LightModelfv"/>
+-        <size name="LightModeliv"/>
++        <size name="LightModelfv" mode="get"/>
++        <size name="LightModeliv" mode="get"/>
+         <size name="Get" mode="get"/>
+     </enum>
+     <enum name="LIGHT_MODEL_AMBIENT"           count="4"  value="0x0B53">
+-        <size name="LightModelfv"/>
+-        <size name="LightModeliv"/>
++        <size name="LightModelfv" mode="get"/>
++        <size name="LightModeliv" mode="get"/>
+         <size name="Get" mode="get"/>
+     </enum>
+     <enum name="SHADE_MODEL"                   count="1"  value="0x0B54">
+@@ -213,33 +213,33 @@
+         <size name="Get" mode="get"/>
+     </enum>
+     <enum name="FOG_INDEX"                     count="1"  value="0x0B61">
+-        <size name="Fogfv"/>
+-        <size name="Fogiv"/>
++        <size name="Fogfv" mode="get"/>
++        <size name="Fogiv" mode="get"/>
+         <size name="Get" mode="get"/>
+     </enum>
+     <enum name="FOG_DENSITY"                   count="1"  value="0x0B62">
+-        <size name="Fogfv"/>
+-        <size name="Fogiv"/>
++        <size name="Fogfv" mode="get"/>
++        <size name="Fogiv" mode="get"/>
+         <size name="Get" mode="get"/>
+     </enum>
+     <enum name="FOG_START"                     count="1"  value="0x0B63">
+-        <size name="Fogfv"/>
+-        <size name="Fogiv"/>
++        <size name="Fogfv" mode="get"/>
++        <size name="Fogiv" mode="get"/>
+         <size name="Get" mode="get"/>
+     </enum>
+     <enum name="FOG_END"                       count="1"  value="0x0B64">
+-        <size name="Fogfv"/>
+-        <size name="Fogiv"/>
++        <size name="Fogfv" mode="get"/>
++        <size name="Fogiv" mode="get"/>
+         <size name="Get" mode="get"/>
+     </enum>
+     <enum name="FOG_MODE"                      count="1"  value="0x0B65">
+-        <size name="Fogfv"/>
+-        <size name="Fogiv"/>
++        <size name="Fogfv" mode="get"/>
++        <size name="Fogiv" mode="get"/>
+         <size name="Get" mode="get"/>
+     </enum>
+     <enum name="FOG_COLOR"                     count="4"  value="0x0B66">
+-        <size name="Fogfv"/>
+-        <size name="Fogiv"/>
++        <size name="Fogfv" mode="get"/>
++        <size name="Fogiv" mode="get"/>
+         <size name="Get" mode="get"/>
+     </enum>
+     <enum name="DEPTH_RANGE"                   count="2"  value="0x0B70">
+@@ -531,8 +531,8 @@
+         <size name="Get" mode="get"/>
+     </enum>
+     <enum name="ALPHA_SCALE"                   count="1"  value="0x0D1C">
+-        <size name="TexEnvfv"/>
+-        <size name="TexEnviv"/>
++        <size name="TexEnvfv" mode="get"/>
++        <size name="TexEnviv" mode="get"/>
+         <size name="GetTexEnvfv" mode="get"/>
+         <size name="GetTexEnviv" mode="get"/>
+         <size name="Get" mode="get"/>
+@@ -625,93 +625,93 @@
+         <size name="Get" mode="get"/>
+     </enum>
+     <enum name="MAP1_COLOR_4"                  count="4"  value="0x0D90">
+-        <size name="Map1d"/>
+-        <size name="Map1f"/>
++        <size name="Map1d" mode="get"/>
++        <size name="Map1f" mode="get"/>
+         <size name="Get" count="1" mode="get"/>
+     </enum>
+     <enum name="MAP1_INDEX"                    count="1"  value="0x0D91">
+-        <size name="Map1d"/>
+-        <size name="Map1f"/>
++        <size name="Map1d" mode="get"/>
++        <size name="Map1f" mode="get"/>
+         <size name="Get" count="1" mode="get"/>
+     </enum>
+     <enum name="MAP1_NORMAL"                   count="3"  value="0x0D92">
+-        <size name="Map1d"/>
+-        <size name="Map1f"/>
++        <size name="Map1d" mode="get"/>
++        <size name="Map1f" mode="get"/>
+         <size name="Get" count="1" mode="get"/>
+     </enum>
+     <enum name="MAP1_TEXTURE_COORD_1"          count="1"  value="0x0D93">
+-        <size name="Map1d"/>
+-        <size name="Map1f"/>
++        <size name="Map1d" mode="get"/>
++        <size name="Map1f" mode="get"/>
+         <size name="Get" count="1" mode="get"/>
+     </enum>
+     <enum name="MAP1_TEXTURE_COORD_2"          count="2"  value="0x0D94">
+-        <size name="Map1d"/>
+-        <size name="Map1f"/>
++        <size name="Map1d" mode="get"/>
++        <size name="Map1f" mode="get"/>
+         <size name="Get" count="1" mode="get"/>
+     </enum>
+     <enum name="MAP1_TEXTURE_COORD_3"          count="3"  value="0x0D95">
+-        <size name="Map1d"/>
+-        <size name="Map1f"/>
++        <size name="Map1d" mode="get"/>
++        <size name="Map1f" mode="get"/>
+         <size name="Get" count="1" mode="get"/>
+     </enum>
+     <enum name="MAP1_TEXTURE_COORD_4"          count="4"  value="0x0D96">
+-        <size name="Map1d"/>
+-        <size name="Map1f"/>
++        <size name="Map1d" mode="get"/>
++        <size name="Map1f" mode="get"/>
+         <size name="Get" count="1" mode="get"/>
+     </enum>
+     <enum name="MAP1_VERTEX_3"                 count="3"  value="0x0D97">
+-        <size name="Map1d"/>
+-        <size name="Map1f"/>
++        <size name="Map1d" mode="get"/>
++        <size name="Map1f" mode="get"/>
+         <size name="Get" count="1" mode="get"/>
+     </enum>
+     <enum name="MAP1_VERTEX_4"                 count="4"  value="0x0D98">
+-        <size name="Map1d"/>
+-        <size name="Map1f"/>
++        <size name="Map1d" mode="get"/>
++        <size name="Map1f" mode="get"/>
+         <size name="Get" count="1" mode="get"/>
+     </enum>
+     <enum name="MAP2_COLOR_4"                  count="4"  value="0x0DB0">
+-        <size name="Map2d"/>
+-        <size name="Map2f"/>
++        <size name="Map2d" mode="get"/>
++        <size name="Map2f" mode="get"/>
+         <size name="Get" count="1" mode="get"/>
+     </enum>
+     <enum name="MAP2_INDEX"                    count="1"  value="0x0DB1">
+-        <size name="Map2d"/>
+-        <size name="Map2f"/>
++        <size name="Map2d" mode="get"/>
++        <size name="Map2f" mode="get"/>
+         <size name="Get" count="1" mode="get"/>
+     </enum>
+     <enum name="MAP2_NORMAL"                   count="3"  value="0x0DB2">
+-        <size name="Map2d"/>
+-        <size name="Map2f"/>
++        <size name="Map2d" mode="get"/>
++        <size name="Map2f" mode="get"/>
+         <size name="Get" count="1" mode="get"/>
+     </enum>
+     <enum name="MAP2_TEXTURE_COORD_1"          count="1"  value="0x0DB3">
+-        <size name="Map2d"/>
+-        <size name="Map2f"/>
++        <size name="Map2d" mode="get"/>
++        <size name="Map2f" mode="get"/>
+         <size name="Get" count="1" mode="get"/>
+     </enum>
+     <enum name="MAP2_TEXTURE_COORD_2"          count="2"  value="0x0DB4">
+-        <size name="Map2d"/>
+-        <size name="Map2f"/>
++        <size name="Map2d" mode="get"/>
++        <size name="Map2f" mode="get"/>
+         <size name="Get" count="1" mode="get"/>
+     </enum>
+     <enum name="MAP2_TEXTURE_COORD_3"          count="3"  value="0x0DB5">
+-        <size name="Map2d"/>
+-        <size name="Map2f"/>
++        <size name="Map2d" mode="get"/>
++        <size name="Map2f" mode="get"/>
+         <size name="Get" count="1" mode="get"/>
+     </enum>
+     <enum name="MAP2_TEXTURE_COORD_4"          count="4"  value="0x0DB6">
+-        <size name="Map2d"/>
+-        <size name="Map2f"/>
++        <size name="Map2d" mode="get"/>
++        <size name="Map2f" mode="get"/>
+         <size name="Get" count="1" mode="get"/>
+     </enum>
+     <enum name="MAP2_VERTEX_3"                 count="3"  value="0x0DB7">
+-        <size name="Map2d"/>
+-        <size name="Map2f"/>
++        <size name="Map2d" mode="get"/>
++        <size name="Map2f" mode="get"/>
+         <size name="Get" count="1" mode="get"/>
+     </enum>
+     <enum name="MAP2_VERTEX_4"                 count="4"  value="0x0DB8">
+-        <size name="Map2d"/>
+-        <size name="Map2f"/>
++        <size name="Map2d" mode="get"/>
++        <size name="Map2f" mode="get"/>
+         <size name="Get" count="1" mode="get"/>
+     </enum>
+     <enum name="MAP1_GRID_DOMAIN"              count="2"  value="0x0DD0">
+@@ -754,8 +754,8 @@
+         <size name="GetTexLevelParameteriv" mode="get"/>
+     </enum>
+     <enum name="TEXTURE_BORDER_COLOR"          count="4"  value="0x1004">
+-        <size name="TexParameterfv"/>
+-        <size name="TexParameteriv"/>
++        <size name="TexParameterfv" mode="get"/>
++        <size name="TexParameteriv" mode="get"/>
+         <size name="GetTexParameterfv" mode="get"/>
+         <size name="GetTexParameteriv" mode="get"/>
+     </enum>
+@@ -763,111 +763,111 @@
+     <enum name="FASTEST"                                  value="0x1101"/>
+     <enum name="NICEST"                                   value="0x1102"/>
+     <enum name="AMBIENT"                       count="4"  value="0x1200">
+-        <size name="Materialfv"/>
+-        <size name="Materialiv"/>
+-        <size name="Lightfv"/>
+-        <size name="Lightiv"/>
++        <size name="Materialfv" mode="get"/>
++        <size name="Materialiv" mode="get"/>
++        <size name="Lightfv" mode="get"/>
++        <size name="Lightiv" mode="get"/>
+         <size name="GetMaterialfv" mode="get"/>
+         <size name="GetMaterialiv" mode="get"/>
+         <size name="GetLightfv" mode="get"/>
+         <size name="GetLightiv" mode="get"/>
+     </enum>
+     <enum name="DIFFUSE"                       count="4"  value="0x1201">
+-        <size name="Materialfv"/>
+-        <size name="Materialiv"/>
+-        <size name="Lightfv"/>
+-        <size name="Lightiv"/>
++        <size name="Materialfv" mode="get"/>
++        <size name="Materialiv" mode="get"/>
++        <size name="Lightfv" mode="get"/>
++        <size name="Lightiv" mode="get"/>
+         <size name="GetMaterialfv" mode="get"/>
+         <size name="GetMaterialiv" mode="get"/>
+         <size name="GetLightfv" mode="get"/>
+         <size name="GetLightiv" mode="get"/>
+     </enum>
+     <enum name="SPECULAR"                      count="4"  value="0x1202">
+-        <size name="Materialfv"/>
+-        <size name="Materialiv"/>
+-        <size name="Lightfv"/>
+-        <size name="Lightiv"/>
++        <size name="Materialfv" mode="get"/>
++        <size name="Materialiv" mode="get"/>
++        <size name="Lightfv" mode="get"/>
++        <size name="Lightiv" mode="get"/>
+         <size name="GetMaterialfv" mode="get"/>
+         <size name="GetMaterialiv" mode="get"/>
+         <size name="GetLightfv" mode="get"/>
+         <size name="GetLightiv" mode="get"/>
+     </enum>
+     <enum name="POSITION"                      count="4"  value="0x1203">
+-        <size name="Lightfv"/>
+-        <size name="Lightiv"/>
++        <size name="Lightfv" mode="get"/>
++        <size name="Lightiv" mode="get"/>
+         <size name="GetLightfv" mode="get"/>
+         <size name="GetLightiv" mode="get"/>
+     </enum>
+     <enum name="SPOT_DIRECTION"                count="3"  value="0x1204">
+-        <size name="Lightfv"/>
+-        <size name="Lightiv"/>
++        <size name="Lightfv" mode="get"/>
++        <size name="Lightiv" mode="get"/>
+         <size name="GetLightfv" mode="get"/>
+         <size name="GetLightiv" mode="get"/>
+     </enum>
+     <enum name="SPOT_EXPONENT"                 count="1"  value="0x1205">
+-        <size name="Lightfv"/>
+-        <size name="Lightiv"/>
++        <size name="Lightfv" mode="get"/>
++        <size name="Lightiv" mode="get"/>
+         <size name="GetLightfv" mode="get"/>
+         <size name="GetLightiv" mode="get"/>
+     </enum>
+     <enum name="SPOT_CUTOFF"                   count="1"  value="0x1206">
+-        <size name="Lightfv"/>
+-        <size name="Lightiv"/>
++        <size name="Lightfv" mode="get"/>
++        <size name="Lightiv" mode="get"/>
+         <size name="GetLightfv" mode="get"/>
+         <size name="GetLightiv" mode="get"/>
+     </enum>
+     <enum name="CONSTANT_ATTENUATION"          count="1"  value="0x1207">
+-        <size name="Lightfv"/>
+-        <size name="Lightiv"/>
++        <size name="Lightfv" mode="get"/>
++        <size name="Lightiv" mode="get"/>
+         <size name="GetLightfv" mode="get"/>
+         <size name="GetLightiv" mode="get"/>
+     </enum>
+     <enum name="LINEAR_ATTENUATION"            count="1"  value="0x1208">
+-        <size name="Lightfv"/>
+-        <size name="Lightiv"/>
++        <size name="Lightfv" mode="get"/>
++        <size name="Lightiv" mode="get"/>
+         <size name="GetLightfv" mode="get"/>
+         <size name="GetLightiv" mode="get"/>
+     </enum>
+     <enum name="QUADRATIC_ATTENUATION"         count="1"  value="0x1209">
+-        <size name="Lightfv"/>
+-        <size name="Lightiv"/>
++        <size name="Lightfv" mode="get"/>
++        <size name="Lightiv" mode="get"/>
+         <size name="GetLightfv" mode="get"/>
+         <size name="GetLightiv" mode="get"/>
+     </enum>
+     <enum name="COMPILE"                                  value="0x1300"/>
+     <enum name="COMPILE_AND_EXECUTE"                      value="0x1301"/>
+     <enum name="BYTE"                          count="1"  value="0x1400">
+-        <size name="CallLists"/>
++        <size name="CallLists" mode="get"/>
+     </enum>
+     <enum name="UNSIGNED_BYTE"                 count="1"  value="0x1401">
+-        <size name="CallLists"/>
++        <size name="CallLists" mode="get"/>
+     </enum>
+     <enum name="SHORT"                         count="2"  value="0x1402">
+-        <size name="CallLists"/>
++        <size name="CallLists" mode="get"/>
+     </enum>
+     <enum name="UNSIGNED_SHORT"                count="2"  value="0x1403">
+-        <size name="CallLists"/>
++        <size name="CallLists" mode="get"/>
+     </enum>
+     <enum name="INT"                           count="4"  value="0x1404">
+-        <size name="CallLists"/>
++        <size name="CallLists" mode="get"/>
+     </enum>
+     <enum name="UNSIGNED_INT"                  count="4"  value="0x1405">
+-        <size name="CallLists"/>
++        <size name="CallLists" mode="get"/>
+     </enum>
+     <enum name="FLOAT"                         count="4"  value="0x1406">
+-        <size name="CallLists"/>
++        <size name="CallLists" mode="get"/>
+     </enum>
+     <enum name="2_BYTES"                       count="2"  value="0x1407">
+-        <size name="CallLists"/>
++        <size name="CallLists" mode="get"/>
+     </enum>
+     <enum name="3_BYTES"                       count="3"  value="0x1408">
+-        <size name="CallLists"/>
++        <size name="CallLists" mode="get"/>
+     </enum>
+     <enum name="4_BYTES"                       count="4"  value="0x1409">
+-        <size name="CallLists"/>
++        <size name="CallLists" mode="get"/>
+     </enum>
+     <enum name="HALF_FLOAT"                    count="2"  value="0x140B">
+-        <size name="CallLists"/>
++        <size name="CallLists" mode="get"/>
+     </enum>
+     <enum name="CLEAR"                                    value="0x1500"/>
+     <enum name="AND"                                      value="0x1501"/>
+@@ -886,26 +886,26 @@
+     <enum name="NAND"                                     value="0x150E"/>
+     <enum name="SET"                                      value="0x150F"/>
+     <enum name="EMISSION"                      count="4"  value="0x1600">
+-        <size name="Materialfv"/>
+-        <size name="Materialiv"/>
++        <size name="Materialfv" mode="get"/>
++        <size name="Materialiv" mode="get"/>
+         <size name="GetMaterialfv" mode="get"/>
+         <size name="GetMaterialiv" mode="get"/>
+     </enum>
+     <enum name="SHININESS"                     count="1"  value="0x1601">
+-        <size name="Materialfv"/>
+-        <size name="Materialiv"/>
++        <size name="Materialfv" mode="get"/>
++        <size name="Materialiv" mode="get"/>
+         <size name="GetMaterialfv" mode="get"/>
+         <size name="GetMaterialiv" mode="get"/>
+     </enum>
+     <enum name="AMBIENT_AND_DIFFUSE"           count="4"  value="0x1602">
+-        <size name="Materialfv"/>
+-        <size name="Materialiv"/>
++        <size name="Materialfv" mode="get"/>
++        <size name="Materialiv" mode="get"/>
+         <size name="GetMaterialfv" mode="get"/>
+         <size name="GetMaterialiv" mode="get"/>
+     </enum>
+     <enum name="COLOR_INDEXES"                 count="3"  value="0x1603">
+-        <size name="Materialfv"/>
+-        <size name="Materialiv"/>
++        <size name="Materialfv" mode="get"/>
++        <size name="Materialiv" mode="get"/>
+         <size name="GetMaterialfv" mode="get"/>
+         <size name="GetMaterialiv" mode="get"/>
+     </enum>
+@@ -950,14 +950,14 @@
+     <enum name="MODULATE"                                 value="0x2100"/>
+     <enum name="DECAL"                                    value="0x2101"/>
+     <enum name="TEXTURE_ENV_MODE"              count="1"  value="0x2200">
+-        <size name="TexEnvfv"/>
+-        <size name="TexEnviv"/>
++        <size name="TexEnvfv" mode="get"/>
++        <size name="TexEnviv" mode="get"/>
+         <size name="GetTexEnvfv" mode="get"/>
+         <size name="GetTexEnviv" mode="get"/>
+     </enum>
+     <enum name="TEXTURE_ENV_COLOR"             count="4"  value="0x2201">
+-        <size name="TexEnvfv"/>
+-        <size name="TexEnviv"/>
++        <size name="TexEnvfv" mode="get"/>
++        <size name="TexEnviv" mode="get"/>
+         <size name="GetTexEnvfv" mode="get"/>
+         <size name="GetTexEnviv" mode="get"/>
+     </enum>
+@@ -966,25 +966,25 @@
+     <enum name="OBJECT_LINEAR"                            value="0x2401"/>
+     <enum name="SPHERE_MAP"                               value="0x2402"/>
+     <enum name="TEXTURE_GEN_MODE"              count="1"  value="0x2500">
+-        <size name="TexGendv"/>
+-        <size name="TexGenfv"/>
+-        <size name="TexGeniv"/>
++        <size name="TexGendv" mode="get"/>
++        <size name="TexGenfv" mode="get"/>
++        <size name="TexGeniv" mode="get"/>
+         <size name="GetTexGendv" mode="get"/>
+         <size name="GetTexGenfv" mode="get"/>
+         <size name="GetTexGeniv" mode="get"/>
+     </enum>
+     <enum name="OBJECT_PLANE"                  count="4"  value="0x2501">
+-        <size name="TexGendv"/>
+-        <size name="TexGenfv"/>
+-        <size name="TexGeniv"/>
++        <size name="TexGendv" mode="get"/>
++        <size name="TexGenfv" mode="get"/>
++        <size name="TexGeniv" mode="get"/>
+         <size name="GetTexGendv" mode="get"/>
+         <size name="GetTexGenfv" mode="get"/>
+         <size name="GetTexGeniv" mode="get"/>
+     </enum>
+     <enum name="EYE_PLANE"                     count="4"  value="0x2502">
+-        <size name="TexGendv"/>
+-        <size name="TexGenfv"/>
+-        <size name="TexGeniv"/>
++        <size name="TexGendv" mode="get"/>
++        <size name="TexGenfv" mode="get"/>
++        <size name="TexGeniv" mode="get"/>
+         <size name="GetTexGendv" mode="get"/>
+         <size name="GetTexGenfv" mode="get"/>
+         <size name="GetTexGeniv" mode="get"/>
+@@ -996,26 +996,26 @@
+     <enum name="NEAREST_MIPMAP_LINEAR"                    value="0x2702"/>
+     <enum name="LINEAR_MIPMAP_LINEAR"                     value="0x2703"/>
+     <enum name="TEXTURE_MAG_FILTER"            count="1"  value="0x2800">
+-        <size name="TexParameterfv"/>
+-        <size name="TexParameteriv"/>
++        <size name="TexParameterfv" mode="get"/>
++        <size name="TexParameteriv" mode="get"/>
+         <size name="GetTexParameterfv" mode="get"/>
+         <size name="GetTexParameteriv" mode="get"/>
+     </enum>
+     <enum name="TEXTURE_MIN_FILTER"            count="1"  value="0x2801">
+-        <size name="TexParameterfv"/>
+-        <size name="TexParameteriv"/>
++        <size name="TexParameterfv" mode="get"/>
++        <size name="TexParameteriv" mode="get"/>
+         <size name="GetTexParameterfv" mode="get"/>
+         <size name="GetTexParameteriv" mode="get"/>
+     </enum>
+     <enum name="TEXTURE_WRAP_S"                count="1"  value="0x2802">
+-        <size name="TexParameterfv"/>
+-        <size name="TexParameteriv"/>
++        <size name="TexParameterfv" mode="get"/>
++        <size name="TexParameteriv" mode="get"/>
+         <size name="GetTexParameterfv" mode="get"/>
+         <size name="GetTexParameteriv" mode="get"/>
+     </enum>
+     <enum name="TEXTURE_WRAP_T"                count="1"  value="0x2803">
+-        <size name="TexParameterfv"/>
+-        <size name="TexParameteriv"/>
++        <size name="TexParameterfv" mode="get"/>
++        <size name="TexParameteriv" mode="get"/>
+         <size name="GetTexParameterfv" mode="get"/>
+         <size name="GetTexParameteriv" mode="get"/>
+     </enum>
+@@ -3104,8 +3104,8 @@
+     <enum name="PROXY_TEXTURE_1D"                         value="0x8063"/>
+     <enum name="PROXY_TEXTURE_2D"                         value="0x8064"/>
+     <enum name="TEXTURE_PRIORITY"              count="1"  value="0x8066">
+-        <size name="TexParameterfv"/>
+-        <size name="TexParameteriv"/>
++        <size name="TexParameterfv" mode="get"/>
++        <size name="TexParameteriv" mode="get"/>
+         <size name="GetTexParameterfv" mode="get"/>
+         <size name="GetTexParameteriv" mode="get"/>
+     </enum>
+@@ -3465,8 +3465,8 @@
+         <size name="GetTexLevelParameteriv" mode="get"/>
+     </enum>
+     <enum name="TEXTURE_WRAP_R"                count="1"  value="0x8072">
+-        <size name="TexParameterfv"/>
+-        <size name="TexParameteriv"/>
++        <size name="TexParameterfv" mode="get"/>
++        <size name="TexParameteriv" mode="get"/>
+         <size name="GetTexParameterfv" mode="get"/>
+         <size name="GetTexParameteriv" mode="get"/>
+     </enum>
+@@ -3490,32 +3490,32 @@
+     </enum>
+     <enum name="CLAMP_TO_EDGE"                            value="0x812F"/>
+     <enum name="TEXTURE_MIN_LOD"               count="1"  value="0x813A">
+-        <size name="TexParameterfv"/>
+-        <size name="TexParameteriv"/>
++        <size name="TexParameterfv" mode="get"/>
++        <size name="TexParameteriv" mode="get"/>
+         <size name="GetTexParameterfv" mode="get"/>
+         <size name="GetTexParameteriv" mode="get"/>
+     </enum>
+     <enum name="TEXTURE_MAX_LOD"               count="1"  value="0x813B">
+-        <size name="TexParameterfv"/>
+-        <size name="TexParameteriv"/>
++        <size name="TexParameterfv" mode="get"/>
++        <size name="TexParameteriv" mode="get"/>
+         <size name="GetTexParameterfv" mode="get"/>
+         <size name="GetTexParameteriv" mode="get"/>
+     </enum>
+     <enum name="TEXTURE_BASE_LEVEL"            count="1"  value="0x813C">
+-        <size name="TexParameterfv"/>
+-        <size name="TexParameteriv"/>
++        <size name="TexParameterfv" mode="get"/>
++        <size name="TexParameteriv" mode="get"/>
+         <size name="GetTexParameterfv" mode="get"/>
+         <size name="GetTexParameteriv" mode="get"/>
+     </enum>
+     <enum name="TEXTURE_MAX_LEVEL"             count="1"  value="0x813D">
+-        <size name="TexParameterfv"/>
+-        <size name="TexParameteriv"/>
++        <size name="TexParameterfv" mode="get"/>
++        <size name="TexParameteriv" mode="get"/>
+         <size name="GetTexParameterfv" mode="get"/>
+         <size name="GetTexParameteriv" mode="get"/>
+     </enum>
+     <enum name="LIGHT_MODEL_COLOR_CONTROL"     count="1"  value="0x81F8">
+-        <size name="LightModelfv"/>
+-        <size name="LightModeliv"/>
++        <size name="LightModelfv" mode="get"/>
++        <size name="LightModeliv" mode="get"/>
+         <size name="Get" mode="get"/>
+     </enum>
+     <enum name="SINGLE_COLOR"                             value="0x81F9"/>
+@@ -3567,26 +3567,26 @@
+     </enum>
+ 
+     <enum name="CONVOLUTION_BORDER_MODE"       count="1"  value="0x8013">
+-        <size name="ConvolutionParameterfv"/>
+-        <size name="ConvolutionParameteriv"/>
++        <size name="ConvolutionParameterfv" mode="get"/>
++        <size name="ConvolutionParameteriv" mode="get"/>
+         <size name="GetConvolutionParameterfv" mode="get"/>
+         <size name="GetConvolutionParameteriv" mode="get"/>
+     </enum>
+     <enum name="CONVOLUTION_BORDER_COLOR"      count="4"  value="0x8154">
+-        <size name="ConvolutionParameterfv"/>
+-        <size name="ConvolutionParameteriv"/>
++        <size name="ConvolutionParameterfv" mode="get"/>
++        <size name="ConvolutionParameteriv" mode="get"/>
+         <size name="GetConvolutionParameterfv" mode="get"/>
+         <size name="GetConvolutionParameteriv" mode="get"/>
+     </enum>
+     <enum name="CONVOLUTION_FILTER_SCALE"      count="4"  value="0x8014">
+-        <size name="ConvolutionParameterfv"/>
+-        <size name="ConvolutionParameteriv"/>
++        <size name="ConvolutionParameterfv" mode="get"/>
++        <size name="ConvolutionParameteriv" mode="get"/>
+         <size name="GetConvolutionParameterfv" mode="get"/>
+         <size name="GetConvolutionParameteriv" mode="get"/>
+     </enum>
+     <enum name="CONVOLUTION_FILTER_BIAS"       count="4"  value="0x8015">
+-        <size name="ConvolutionParameterfv"/>
+-        <size name="ConvolutionParameteriv"/>
++        <size name="ConvolutionParameterfv" mode="get"/>
++        <size name="ConvolutionParameteriv" mode="get"/>
+         <size name="GetConvolutionParameterfv" mode="get"/>
+         <size name="GetConvolutionParameteriv" mode="get"/>
+     </enum>
+@@ -3734,14 +3734,14 @@
+     <enum name="PROXY_POST_COLOR_MATRIX_COLOR_TABLE"            value="0x80D5"/>
+ 
+     <enum name="COLOR_TABLE_SCALE"             count="4"  value="0x80D6">
+-        <size name="ColorTableParameterfv"/>
+-        <size name="ColorTableParameteriv"/>
++        <size name="ColorTableParameterfv" mode="get"/>
++        <size name="ColorTableParameteriv" mode="get"/>
+         <size name="GetColorTableParameterfv" mode="get"/>
+         <size name="GetColorTableParameteriv" mode="get"/>
+     </enum>
+     <enum name="COLOR_TABLE_BIAS"              count="4"  value="0x80D7">
+-        <size name="ColorTableParameterfv"/>
+-        <size name="ColorTableParameteriv"/>
++        <size name="ColorTableParameterfv" mode="get"/>
++        <size name="ColorTableParameteriv" mode="get"/>
+         <size name="GetColorTableParameterfv" mode="get"/>
+         <size name="GetColorTableParameteriv" mode="get"/>
+     </enum>
+@@ -4221,92 +4221,92 @@
+     <enum name="CLAMP_TO_BORDER"                          value="0x812D"/>
+     <enum name="COMBINE"                                  value="0x8570"/>
+     <enum name="COMBINE_RGB"                   count="1"  value="0x8571">
+-        <size name="TexEnvfv"/>
+-        <size name="TexEnviv"/>
++        <size name="TexEnvfv" mode="get"/>
++        <size name="TexEnviv" mode="get"/>
+         <size name="GetTexEnvfv" mode="get"/>
+         <size name="GetTexEnviv" mode="get"/>
+     </enum>
+     <enum name="COMBINE_ALPHA"                 count="1"  value="0x8572">
+-        <size name="TexEnvfv"/>
+-        <size name="TexEnviv"/>
++        <size name="TexEnvfv" mode="get"/>
++        <size name="TexEnviv" mode="get"/>
+         <size name="GetTexEnvfv" mode="get"/>
+         <size name="GetTexEnviv" mode="get"/>
+     </enum>
+     <enum name="SOURCE0_RGB"                   count="1"  value="0x8580">
+-        <size name="TexEnvfv"/>
+-        <size name="TexEnviv"/>
++        <size name="TexEnvfv" mode="get"/>
++        <size name="TexEnviv" mode="get"/>
+         <size name="GetTexEnvfv" mode="get"/>
+         <size name="GetTexEnviv" mode="get"/>
+     </enum>
+     <enum name="SOURCE1_RGB"                   count="1"  value="0x8581">
+-        <size name="TexEnvfv"/>
+-        <size name="TexEnviv"/>
++        <size name="TexEnvfv" mode="get"/>
++        <size name="TexEnviv" mode="get"/>
+         <size name="GetTexEnvfv" mode="get"/>
+         <size name="GetTexEnviv" mode="get"/>
+     </enum>
+     <enum name="SOURCE2_RGB"                   count="1"  value="0x8582">
+-        <size name="TexEnvfv"/>
+-        <size name="TexEnviv"/>
++        <size name="TexEnvfv" mode="get"/>
++        <size name="TexEnviv" mode="get"/>
+         <size name="GetTexEnvfv" mode="get"/>
+         <size name="GetTexEnviv" mode="get"/>
+     </enum>
+     <enum name="SOURCE0_ALPHA"                 count="1"  value="0x8588">
+-        <size name="TexEnvfv"/>
+-        <size name="TexEnviv"/>
++        <size name="TexEnvfv" mode="get"/>
++        <size name="TexEnviv" mode="get"/>
+         <size name="GetTexEnvfv" mode="get"/>
+         <size name="GetTexEnviv" mode="get"/>
+     </enum>
+     <enum name="SOURCE1_ALPHA"                 count="1"  value="0x8589">
+-        <size name="TexEnvfv"/>
+-        <size name="TexEnviv"/>
++        <size name="TexEnvfv" mode="get"/>
++        <size name="TexEnviv" mode="get"/>
+         <size name="GetTexEnvfv" mode="get"/>
+         <size name="GetTexEnviv" mode="get"/>
+     </enum>
+     <enum name="SOURCE2_ALPHA"                 count="1"  value="0x858A">
+-        <size name="TexEnvfv"/>
+-        <size name="TexEnviv"/>
++        <size name="TexEnvfv" mode="get"/>
++        <size name="TexEnviv" mode="get"/>
+         <size name="GetTexEnvfv" mode="get"/>
+         <size name="GetTexEnviv" mode="get"/>
+     </enum>
+     <enum name="OPERAND0_RGB"                  count="1"  value="0x8590">
+-        <size name="TexEnvfv"/>
+-        <size name="TexEnviv"/>
++        <size name="TexEnvfv" mode="get"/>
++        <size name="TexEnviv" mode="get"/>
+         <size name="GetTexEnvfv" mode="get"/>
+         <size name="GetTexEnviv" mode="get"/>
+     </enum>
+     <enum name="OPERAND1_RGB"                  count="1"  value="0x8591">
+-        <size name="TexEnvfv"/>
+-        <size name="TexEnviv"/>
++        <size name="TexEnvfv" mode="get"/>
++        <size name="TexEnviv" mode="get"/>
+         <size name="GetTexEnvfv" mode="get"/>
+         <size name="GetTexEnviv" mode="get"/>
+     </enum>
+     <enum name="OPERAND2_RGB"                  count="1"  value="0x8592">
+-        <size name="TexEnvfv"/>
+-        <size name="TexEnviv"/>
++        <size name="TexEnvfv" mode="get"/>
++        <size name="TexEnviv" mode="get"/>
+         <size name="GetTexEnvfv" mode="get"/>
+         <size name="GetTexEnviv" mode="get"/>
+     </enum>
+     <enum name="OPERAND0_ALPHA"                count="1"  value="0x8598">
+-        <size name="TexEnvfv"/>
+-        <size name="TexEnviv"/>
++        <size name="TexEnvfv" mode="get"/>
++        <size name="TexEnviv" mode="get"/>
+         <size name="GetTexEnvfv" mode="get"/>
+         <size name="GetTexEnviv" mode="get"/>
+     </enum>
+     <enum name="OPERAND1_ALPHA"                count="1"  value="0x8599">
+-        <size name="TexEnvfv"/>
+-        <size name="TexEnviv"/>
++        <size name="TexEnvfv" mode="get"/>
++        <size name="TexEnviv" mode="get"/>
+         <size name="GetTexEnvfv" mode="get"/>
+         <size name="GetTexEnviv" mode="get"/>
+     </enum>
+     <enum name="OPERAND2_ALPHA"                count="1"  value="0x859A">
+-        <size name="TexEnvfv"/>
+-        <size name="TexEnviv"/>
++        <size name="TexEnvfv" mode="get"/>
++        <size name="TexEnviv" mode="get"/>
+         <size name="GetTexEnvfv" mode="get"/>
+         <size name="GetTexEnviv" mode="get"/>
+     </enum>
+     <enum name="RGB_SCALE"                     count="1"  value="0x8573">
+-        <size name="TexEnvfv"/>
+-        <size name="TexEnviv"/>
++        <size name="TexEnvfv" mode="get"/>
++        <size name="TexEnviv" mode="get"/>
+         <size name="GetTexEnvfv" mode="get"/>
+         <size name="GetTexEnviv" mode="get"/>
+     </enum>
+@@ -4657,24 +4657,24 @@
+         <size name="Get" mode="get"/>
+     </enum>
+     <enum name="POINT_SIZE_MIN"                count="1"  value="0x8126">
+-        <size name="PointParameterfv"/>
++        <size name="PointParameterfv" mode="get"/>
+         <size name="Get" mode="get"/>
+     </enum>
+     <enum name="POINT_SIZE_MAX"                count="1"  value="0x8127">
+-        <size name="PointParameterfv"/>
++        <size name="PointParameterfv" mode="get"/>
+         <size name="Get" mode="get"/>
+     </enum>
+     <enum name="POINT_FADE_THRESHOLD_SIZE"     count="1"  value="0x8128">
+-        <size name="PointParameterfv"/>
++        <size name="PointParameterfv" mode="get"/>
+         <size name="Get" mode="get"/>
+     </enum>
+     <enum name="POINT_DISTANCE_ATTENUATION"    count="3"  value="0x8129">
+-        <size name="PointParameterfv"/>
++        <size name="PointParameterfv" mode="get"/>
+         <size name="Get" mode="get"/>
+     </enum>
+     <enum name="GENERATE_MIPMAP"               count="1"  value="0x8191">
+-        <size name="TexParameterfv"/>
+-        <size name="TexParameteriv"/>
++        <size name="TexParameterfv" mode="get"/>
++        <size name="TexParameteriv" mode="get"/>
+         <size name="GetTexParameterfv" mode="get"/>
+         <size name="GetTexParameteriv" mode="get"/>
+     </enum>
+@@ -4723,10 +4723,10 @@
+     </enum>
+     <enum name="TEXTURE_FILTER_CONTROL"                   value="0x8500"/>
+     <enum name="TEXTURE_LOD_BIAS"              count="1"  value="0x8501">
+-        <size name="TexEnvfv"/>
+-        <size name="TexEnviv"/>
+-        <size name="TexParameterfv"/>
+-        <size name="TexParameteriv"/>
++        <size name="TexEnvfv" mode="get"/>
++        <size name="TexEnviv" mode="get"/>
++        <size name="TexParameterfv" mode="get"/>
++        <size name="TexParameteriv" mode="get"/>
+         <size name="GetTexEnvfv" mode="get"/>
+         <size name="GetTexEnviv" mode="get"/>
+         <size name="GetTexParameterfv" mode="get"/>
+@@ -4739,20 +4739,20 @@
+         <size name="GetTexLevelParameteriv" mode="get"/>
+     </enum>
+     <enum name="DEPTH_TEXTURE_MODE"            count="1"  value="0x884B">
+-        <size name="TexParameterfv"/>
+-        <size name="TexParameteriv"/>
++        <size name="TexParameterfv" mode="get"/>
++        <size name="TexParameteriv" mode="get"/>
+         <size name="GetTexParameterfv" mode="get"/>
+         <size name="GetTexParameteriv" mode="get"/>
+     </enum>
+     <enum name="TEXTURE_COMPARE_MODE"          count="1"  value="0x884C">
+-        <size name="TexParameterfv"/>
+-        <size name="TexParameteriv"/>
++        <size name="TexParameterfv" mode="get"/>
++        <size name="TexParameteriv" mode="get"/>
+         <size name="GetTexParameterfv" mode="get"/>
+         <size name="GetTexParameteriv" mode="get"/>
+     </enum>
+     <enum name="TEXTURE_COMPARE_FUNC"          count="1"  value="0x884D">
+-        <size name="TexParameterfv"/>
+-        <size name="TexParameteriv"/>
++        <size name="TexParameterfv" mode="get"/>
++        <size name="TexParameteriv" mode="get"/>
+         <size name="GetTexParameterfv" mode="get"/>
+         <size name="GetTexParameteriv" mode="get"/>
+     </enum>
+@@ -5304,8 +5304,8 @@
+     <enum name="SHADING_LANGUAGE_VERSION"         value="0x8B8C"/>
+     <enum name="CURRENT_PROGRAM"                  value="0x8B8D"/>
+     <enum name="POINT_SPRITE_COORD_ORIGIN" count="1"  value="0x8CA0">
+-        <size name="PointParameterfv"/>
+-        <size name="PointParameteriv"/>
++        <size name="PointParameterfv" mode="get"/>
++        <size name="PointParameteriv" mode="get"/>
+     </enum>
+     <enum name="LOWER_LEFT"                       value="0x8CA1"/>
+     <enum name="UPPER_LEFT"                       value="0x8CA2"/>
+@@ -6434,16 +6434,16 @@
+ 
+ <category name="GL_ARB_point_parameters" number="14">
+     <enum name="POINT_SIZE_MIN_ARB"            count="1"  value="0x8126">
+-        <size name="PointParameterfv"/>
++        <size name="PointParameterfv" mode="get"/>
+     </enum>
+     <enum name="POINT_SIZE_MAX_ARB"            count="1"  value="0x8127">
+-        <size name="PointParameterfv"/>
++        <size name="PointParameterfv" mode="get"/>
+     </enum>
+     <enum name="POINT_FADE_THRESHOLD_SIZE_ARB" count="1"  value="0x8128">
+-        <size name="PointParameterfv"/>
++        <size name="PointParameterfv" mode="get"/>
+     </enum>
+     <enum name="POINT_DISTANCE_ATTENUATION_ARB" count="3" value="0x8129">
+-        <size name="PointParameterfv"/>
++        <size name="PointParameterfv" mode="get"/>
+     </enum>
+ 
+     <function name="PointParameterfARB" alias="PointParameterf">
+@@ -6749,8 +6749,8 @@
+         <size name="GetTexLevelParameteriv" mode="get"/>
+     </enum>
+     <enum name="DEPTH_TEXTURE_MODE_ARB"        count="1"  value="0x884B">
+-        <size name="TexParameterfv"/>
+-        <size name="TexParameteriv"/>
++        <size name="TexParameterfv" mode="get"/>
++        <size name="TexParameteriv" mode="get"/>
+         <size name="GetTexParameterfv" mode="get"/>
+         <size name="GetTexParameteriv" mode="get"/>
+     </enum>
+@@ -6758,14 +6758,14 @@
+ 
+ <category name="GL_ARB_shadow" number="23">
+     <enum name="TEXTURE_COMPARE_MODE_ARB"      count="1"  value="0x884C">
+-        <size name="TexParameterfv"/>
+-        <size name="TexParameteriv"/>
++        <size name="TexParameterfv" mode="get"/>
++        <size name="TexParameteriv" mode="get"/>
+         <size name="GetTexParameterfv" mode="get"/>
+         <size name="GetTexParameteriv" mode="get"/>
+     </enum>
+     <enum name="TEXTURE_COMPARE_FUNC_ARB"      count="1"  value="0x884D">
+-        <size name="TexParameterfv"/>
+-        <size name="TexParameteriv"/>
++        <size name="TexParameterfv" mode="get"/>
++        <size name="TexParameteriv" mode="get"/>
+         <size name="GetTexParameterfv" mode="get"/>
+         <size name="GetTexParameteriv" mode="get"/>
+     </enum>
+@@ -6774,8 +6774,8 @@
+ 
+ <category name="GL_ARB_shadow_ambient" number="24">
+     <enum name="TEXTURE_COMPARE_FAIL_VALUE_ARB" count="1" value="0x80BF">
+-        <size name="TexParameterfv"/>
+-        <size name="TexParameteriv"/>
++        <size name="TexParameterfv" mode="get"/>
++        <size name="TexParameteriv" mode="get"/>
+         <size name="GetTexParameterfv" mode="get"/>
+         <size name="GetTexParameteriv" mode="get"/>
+     </enum>
+@@ -8022,8 +8022,8 @@
+         <size name="Get" mode="get"/>
+     </enum>
+     <enum name="COORD_REPLACE_ARB"             count="1"  value="0x8862">
+-        <size name="TexEnvfv"/>
+-        <size name="TexEnviv"/>
++        <size name="TexEnvfv" mode="get"/>
++        <size name="TexEnviv" mode="get"/>
+         <size name="GetTexEnvfv" mode="get"/>
+         <size name="GetTexEnviv" mode="get"/>
+     </enum>
+@@ -8971,8 +8971,8 @@
+ 
+ <category name="GL_SGIS_generate_mipmap" number="32">
+     <enum name="GENERATE_MIPMAP_SGIS"          count="1"  value="0x8191">
+-        <size name="TexParameterfv"/>
+-        <size name="TexParameteriv"/>
++        <size name="TexParameterfv" mode="get"/>
++        <size name="TexParameteriv" mode="get"/>
+         <size name="GetTexParameterfv" mode="get"/>
+         <size name="GetTexParameteriv" mode="get"/>
+     </enum>
+@@ -8982,26 +8982,26 @@
+ <category name="GL_SGIX_clipmap" number="33">
+     <enum name="LINEAR_CLIPMAP_LINEAR_SGIX"               value="0x8170"/>
+     <enum name="TEXTURE_CLIPMAP_CENTER_SGIX"   count="2"  value="0x8171">
+-        <size name="TexParameterfv"/>
+-        <size name="TexParameteriv"/>
++        <size name="TexParameterfv" mode="get"/>
++        <size name="TexParameteriv" mode="get"/>
+         <size name="GetTexParameterfv" mode="get"/>
+         <size name="GetTexParameteriv" mode="get"/>
+     </enum>
+     <enum name="TEXTURE_CLIPMAP_FRAME_SGIX"    count="1"  value="0x8172">
+-        <size name="TexParameterfv"/>
+-        <size name="TexParameteriv"/>
++        <size name="TexParameterfv" mode="get"/>
++        <size name="TexParameteriv" mode="get"/>
+         <size name="GetTexParameterfv" mode="get"/>
+         <size name="GetTexParameteriv" mode="get"/>
+     </enum>
+     <enum name="TEXTURE_CLIPMAP_OFFSET_SGIX"   count="2"  value="0x8173">
+-        <size name="TexParameterfv"/>
+-        <size name="TexParameteriv"/>
++        <size name="TexParameterfv" mode="get"/>
++        <size name="TexParameteriv" mode="get"/>
+         <size name="GetTexParameterfv" mode="get"/>
+         <size name="GetTexParameteriv" mode="get"/>
+     </enum>
+     <enum name="TEXTURE_CLIPMAP_VIRTUAL_DEPTH_SGIX" count="3" value="0x8174">
+-        <size name="TexParameterfv"/>
+-        <size name="TexParameteriv"/>
++        <size name="TexParameterfv" mode="get"/>
++        <size name="TexParameteriv" mode="get"/>
+         <size name="GetTexParameterfv" mode="get"/>
+         <size name="GetTexParameteriv" mode="get"/>
+     </enum>
+@@ -9016,14 +9016,14 @@
+ 
+ <category name="GL_SGIX_shadow" number="34">
+     <enum name="TEXTURE_COMPARE_SGIX"          count="1"  value="0x819A">
+-        <size name="TexParameterfv"/>
+-        <size name="TexParameteriv"/>
++        <size name="TexParameterfv" mode="get"/>
++        <size name="TexParameteriv" mode="get"/>
+         <size name="GetTexParameterfv" mode="get"/>
+         <size name="GetTexParameteriv" mode="get"/>
+     </enum>
+     <enum name="TEXTURE_COMPARE_OPERATOR_SGIX" count="1"  value="0x819B">
+-        <size name="TexParameterfv"/>
+-        <size name="TexParameteriv"/>
++        <size name="TexParameterfv" mode="get"/>
++        <size name="TexParameteriv" mode="get"/>
+         <size name="GetTexParameterfv" mode="get"/>
+         <size name="GetTexParameteriv" mode="get"/>
+     </enum>
+@@ -9100,16 +9100,16 @@
+ 
+ <category name="GL_EXT_point_parameters" number="54">
+     <enum name="POINT_SIZE_MIN_EXT"            count="1"  value="0x8126">
+-        <size name="PointParameterfv"/>
++        <size name="PointParameterfv" mode="get"/>
+     </enum>
+     <enum name="POINT_SIZE_MAX_EXT"            count="1"  value="0x8127">
+-        <size name="PointParameterfv"/>
++        <size name="PointParameterfv" mode="get"/>
+     </enum>
+     <enum name="POINT_FADE_THRESHOLD_SIZE_EXT" count="1"  value="0x8128">
+-        <size name="PointParameterfv"/>
++        <size name="PointParameterfv" mode="get"/>
+     </enum>
+     <enum name="POINT_DISTANCE_ATTENUATION_EXT" count="3" value="0x8129">
+-        <size name="PointParameterfv"/>
++        <size name="PointParameterfv" mode="get"/>
+     </enum>
+ 
+     <function name="PointParameterfEXT" alias="PointParameterf">
+@@ -9158,14 +9158,14 @@
+ 
+ <category name="GL_SGIX_texture_scale_bias" number="56">
+     <enum name="POST_TEXTURE_FILTER_BIAS_SGIX"  count="4" value="0x8179">
+-        <size name="TexParameterfv"/>
+-        <size name="TexParameteriv"/>
++        <size name="TexParameterfv" mode="get"/>
++        <size name="TexParameteriv" mode="get"/>
+         <size name="GetTexParameterfv" mode="get"/>
+         <size name="GetTexParameteriv" mode="get"/>
+     </enum>
+     <enum name="POST_TEXTURE_FILTER_SCALE_SGIX" count="4" value="0x817A">
+-        <size name="TexParameterfv"/>
+-        <size name="TexParameteriv"/>
++        <size name="TexParameterfv" mode="get"/>
++        <size name="TexParameteriv" mode="get"/>
+         <size name="GetTexParameterfv" mode="get"/>
+         <size name="GetTexParameteriv" mode="get"/>
+     </enum>
+@@ -9225,8 +9225,8 @@
+ <category name="GL_SGIX_fog_offset" number="65">
+     <enum name="FOG_OFFSET_SGIX"                          value="0x8198"/>
+     <enum name="FOG_OFFSET_VALUE_SGIX"         count="1"  value="0x8199">
+-        <size name="Fogfv"/>
+-        <size name="Fogiv"/>
++        <size name="Fogfv" mode="get"/>
++        <size name="Fogiv" mode="get"/>
+     </enum>
+ </category>
+ 
+@@ -9273,8 +9273,8 @@
+     <enum name="CONSTANT_BORDER_HP"                       value="0x8151"/>
+     <enum name="REPLICATE_BORDER_HP"                      value="0x8153"/>
+     <enum name="CONVOLUTION_BORDER_COLOR_HP"   count="4"  value="0x8154">
+-        <size name="ConvolutionParameterfv"/>
+-        <size name="ConvolutionParameteriv"/>
++        <size name="ConvolutionParameterfv" mode="get"/>
++        <size name="ConvolutionParameteriv" mode="get"/>
+         <size name="GetConvolutionParameterfv" mode="get"/>
+         <size name="GetConvolutionParameteriv" mode="get"/>
+     </enum>
+@@ -9370,20 +9370,20 @@
+ 
+ <category name="GL_SGIX_texture_lod_bias" number="84">
+     <enum name="TEXTURE_LOD_BIAS_S_SGIX"       count="1"  value="0x818E">
+-        <size name="TexParameterfv"/>
+-        <size name="TexParameteriv"/>
++        <size name="TexParameterfv" mode="get"/>
++        <size name="TexParameteriv" mode="get"/>
+         <size name="GetTexParameterfv" mode="get"/>
+         <size name="GetTexParameteriv" mode="get"/>
+     </enum>
+     <enum name="TEXTURE_LOD_BIAS_T_SGIX"       count="1"  value="0x818F">
+-        <size name="TexParameterfv"/>
+-        <size name="TexParameteriv"/>
++        <size name="TexParameterfv" mode="get"/>
++        <size name="TexParameteriv" mode="get"/>
+         <size name="GetTexParameterfv" mode="get"/>
+         <size name="GetTexParameteriv" mode="get"/>
+     </enum>
+     <enum name="TEXTURE_LOD_BIAS_R_SGIX"       count="1"  value="0x8190">
+-        <size name="TexParameterfv"/>
+-        <size name="TexParameteriv"/>
++        <size name="TexParameterfv" mode="get"/>
++        <size name="TexParameteriv" mode="get"/>
+         <size name="GetTexParameterfv" mode="get"/>
+         <size name="GetTexParameteriv" mode="get"/>
+     </enum>
+@@ -9398,8 +9398,8 @@
+ 
+ <category name="GL_SGIX_shadow_ambient" number="90">
+     <enum name="SHADOW_AMBIENT_SGIX"           count="1"  value="0x80BF">
+-        <size name="TexParameterfv"/>
+-        <size name="TexParameteriv"/>
++        <size name="TexParameterfv" mode="get"/>
++        <size name="TexParameteriv" mode="get"/>
+         <size name="GetTexParameterfv" mode="get"/>
+         <size name="GetTexParameteriv" mode="get"/>
+     </enum>
+@@ -9746,8 +9746,8 @@
+ 
+ <category name="GL_EXT_separate_specular_color" number="144">
+     <enum name="LIGHT_MODEL_COLOR_CONTROL_EXT" count="1"  value="0x81F8">
+-        <size name="LightModelfv"/>
+-        <size name="LightModeliv"/>
++        <size name="LightModelfv" mode="get"/>
++        <size name="LightModeliv" mode="get"/>
+     </enum>
+     <enum name="SINGLE_COLOR_EXT"                         value="0x81F9"/>
+     <enum name="SEPARATE_SPECULAR_COLOR_EXT"              value="0x81FA"/>
+@@ -10625,8 +10625,8 @@
+ 
+ <category name="GL_EXT_texture_lod_bias" number="186">
+     <enum name="TEXTURE_LOD_BIAS_EXT"          count="1"  value="0x8501">
+-        <size name="TexParameterfv"/>
+-        <size name="TexParameteriv"/>
++        <size name="TexParameterfv" mode="get"/>
++        <size name="TexParameteriv" mode="get"/>
+         <size name="GetTexParameterfv" mode="get"/>
+         <size name="GetTexParameteriv" mode="get"/>
+     </enum>
+@@ -10634,8 +10634,8 @@
+ 
+ <category name="GL_EXT_texture_filter_anisotropic" number="187">
+     <enum name="TEXTURE_MAX_ANISOTROPY_EXT"    count="1"  value="0x84FE">
+-        <size name="TexParameterfv"/>
+-        <size name="TexParameteriv"/>
++        <size name="TexParameterfv" mode="get"/>
++        <size name="TexParameteriv" mode="get"/>
+         <size name="GetTexParameterfv" mode="get"/>
+         <size name="GetTexParameteriv" mode="get"/>
+     </enum>
+@@ -10794,8 +10794,8 @@
+ 
+ <category name="GL_NV_fog_distance" number="192">
+     <enum name="FOG_DISTANCE_MODE_NV"          count="1"  value="0x855A">
+-        <size name="Fogfv"/>
+-        <size name="Fogiv"/>
++        <size name="Fogfv" mode="get"/>
++        <size name="Fogiv" mode="get"/>
+         <size name="Get" mode="get"/>
+     </enum>
+     <enum name="EYE_RADIAL_NV"                            value="0x855B"/>
+@@ -10809,26 +10809,26 @@
+ <category name="GL_NV_texture_env_combine4" number="195">
+     <enum name="COMBINE4_NV"                              value="0x8503"/>
+     <enum name="SOURCE3_RGB_NV"                count="1"  value="0x8583">
+-        <size name="TexEnvfv"/>
+-        <size name="TexEnviv"/>
++        <size name="TexEnvfv" mode="get"/>
++        <size name="TexEnviv" mode="get"/>
+         <size name="GetTexEnvfv" mode="get"/>
+         <size name="GetTexEnviv" mode="get"/>
+     </enum>
+     <enum name="SOURCE3_ALPHA_NV"              count="1"  value="0x858B">
+-        <size name="TexEnvfv"/>
+-        <size name="TexEnviv"/>
++        <size name="TexEnvfv" mode="get"/>
++        <size name="TexEnviv" mode="get"/>
+         <size name="GetTexEnvfv" mode="get"/>
+         <size name="GetTexEnviv" mode="get"/>
+     </enum>
+     <enum name="OPERAND3_RGB_NV"               count="1"  value="0x8593">
+-        <size name="TexEnvfv"/>
+-        <size name="TexEnviv"/>
++        <size name="TexEnvfv" mode="get"/>
++        <size name="TexEnviv" mode="get"/>
+         <size name="GetTexEnvfv" mode="get"/>
+         <size name="GetTexEnviv" mode="get"/>
+     </enum>
+     <enum name="OPERAND3_ALPHA_NV"             count="1"  value="0x859B">
+-        <size name="TexEnvfv"/>
+-        <size name="TexEnviv"/>
++        <size name="TexEnvfv" mode="get"/>
++        <size name="TexEnviv" mode="get"/>
+         <size name="GetTexEnvfv" mode="get"/>
+         <size name="GetTexEnviv" mode="get"/>
+     </enum>
+@@ -11842,20 +11842,20 @@
+ 
+ <category name="GL_SGIX_texture_coordinate_clamp" number="235">
+     <enum name="TEXTURE_MAX_CLAMP_S_SGIX"      count="1"  value="0x8369">
+-        <size name="TexParameterfv"/>
+-        <size name="TexParameteriv"/>
++        <size name="TexParameterfv" mode="get"/>
++        <size name="TexParameteriv" mode="get"/>
+         <size name="GetTexParameterfv" mode="get"/>
+         <size name="GetTexParameteriv" mode="get"/>
+     </enum>
+     <enum name="TEXTURE_MAX_CLAMP_T_SGIX"      count="1"  value="0x836A">
+-        <size name="TexParameterfv"/>
+-        <size name="TexParameteriv"/>
++        <size name="TexParameterfv" mode="get"/>
++        <size name="TexParameteriv" mode="get"/>
+         <size name="GetTexParameterfv" mode="get"/>
+         <size name="GetTexParameteriv" mode="get"/>
+     </enum>
+     <enum name="TEXTURE_MAX_CLAMP_R_SGIX"      count="1"  value="0x836B">
+-        <size name="TexParameterfv"/>
+-        <size name="TexParameteriv"/>
++        <size name="TexParameterfv" mode="get"/>
++        <size name="TexParameteriv" mode="get"/>
+         <size name="GetTexParameterfv" mode="get"/>
+         <size name="GetTexParameteriv" mode="get"/>
+     </enum>
+@@ -11894,8 +11894,8 @@
+     <enum name="DU8DV8_ATI"                               value="0x877A"/>
+     <enum name="BUMP_ENVMAP_ATI"                          value="0x877B"/>
+     <enum name="BUMP_TARGET_ATI"              count="1"   value="0x877C">
+-        <size name="TexEnviv"/>
+-        <size name="TexEnvfv"/>
++        <size name="TexEnviv" mode="get"/>
++        <size name="TexEnvfv" mode="get"/>
+         <size name="GetTexEnviv" mode="get"/>
+         <size name="GetTexEnvfv" mode="get"/>
+     </enum>
+@@ -12199,30 +12199,30 @@
+          added for this extension. -->
+ 
+     <enum name="POINT_SIZE_MIN_EXT"            count="1"  value="0x8126">
+-        <size name="PointParameteriv"/>
++        <size name="PointParameteriv" mode="get"/>
+     </enum>
+     <enum name="POINT_SIZE_MAX_EXT"            count="1"  value="0x8127">
+-        <size name="PointParameteriv"/>
++        <size name="PointParameteriv" mode="get"/>
+     </enum>
+     <enum name="POINT_FADE_THRESHOLD_SIZE_EXT" count="1"  value="0x8128">
+-        <size name="PointParameteriv"/>
++        <size name="PointParameteriv" mode="get"/>
+     </enum>
+     <enum name="POINT_DISTANCE_ATTENUATION_EXT" count="3" value="0x8129">
+-        <size name="PointParameteriv"/>
++        <size name="PointParameteriv" mode="get"/>
+     </enum>
+ 
+     <enum name="POINT_SPRITE_NV"               count="1"  value="0x8861">
+         <size name="Get" mode="get"/>
+     </enum>
+     <enum name="COORD_REPLACE_NV"              count="1"  value="0x8862">
+-        <size name="TexEnvfv"/>
+-        <size name="TexEnviv"/>
++        <size name="TexEnvfv" mode="get"/>
++        <size name="TexEnviv" mode="get"/>
+         <size name="GetTexEnvfv" mode="get"/>
+         <size name="GetTexEnviv" mode="get"/>
+     </enum>
+     <enum name="POINT_SPRITE_R_MODE_NV"        count="1"  value="0x8863">
+-        <size name="PointParameterfv"/>
+-        <size name="PointParameteriv"/>
++        <size name="PointParameterfv" mode="get"/>
++        <size name="PointParameteriv"  mode="get"/>
+         <size name="Get" mode="get"/>
+     </enum>
+ 
+@@ -12351,8 +12351,8 @@
+ 
+ <category name="GL_NV_texture_expand_normal" number="286">
+     <enum name="TEXTURE_UNSIGNED_REMAP_MODE_NV" count="1" value="0x888F">
+-        <size name="TexParameterfv"/>
+-        <size name="TexParameteriv"/>
++        <size name="TexParameterfv" mode="get"/>
++        <size name="TexParameteriv" mode="get"/>
+         <size name="GetTexParameterfv" mode="get"/>
+         <size name="GetTexParameteriv" mode="get"/>
+     </enum>
+@@ -12526,22 +12526,22 @@
+ 
+ <category name="GL_APPLE_texture_range" number="367">
+     <enum name="TEXTURE_STORAGE_HINT_APPLE" count="1" value="0x85BC">
+-        <size name="TexParameteriv"/>
+-        <size name="TexParameterfv"/>
++        <size name="TexParameteriv" mode="get"/>
++        <size name="TexParameterfv" mode="get"/>
+         <size name="GetTexParameteriv" mode="get"/>
+         <size name="GetTexParameterfv" mode="get"/>
+     </enum>
+     <enum name="STORAGE_PRIVATE_APPLE" count="1" value="0x85BD">
+-        <size name="TexParameteriv"/>
+-        <size name="TexParameterfv"/>
++        <size name="TexParameteriv" mode="get"/>
++        <size name="TexParameterfv" mode="get"/>
+     </enum>
+     <enum name="STORAGE_CACHED_APPLE" count="1" value="0x85BE">
+-        <size name="TexParameteriv"/>
+-        <size name="TexParameterfv"/>
++        <size name="TexParameteriv" mode="get"/>
++        <size name="TexParameterfv" mode="get"/>
+     </enum>
+     <enum name="STORAGE_SHARED_APPLE" count="1" value="0x85BF">
+-        <size name="TexParameteriv"/>
+-        <size name="TexParameterfv"/>
++        <size name="TexParameteriv" mode="get"/>
++        <size name="TexParameterfv" mode="get"/>
+     </enum>
+     <enum name="TEXTURE_RANGE_LENGTH_APPLE" count="1" value="0x85B7">
+         <size name="GetTexParameteriv" mode="get"/>
+@@ -12810,16 +12810,16 @@
+ 
+ <category name="GL_SGIS_point_parameters">
+     <enum name="POINT_SIZE_MIN_SGIS"           count="1"  value="0x8126">
+-        <size name="PointParameterfv"/>
++        <size name="PointParameterfv" mode="get"/>
+     </enum>
+     <enum name="POINT_SIZE_MAX_SGIS"           count="1"  value="0x8127">
+-        <size name="PointParameterfv"/>
++        <size name="PointParameterfv" mode="get"/>
+     </enum>
+     <enum name="POINT_FADE_THRESHOLD_SIZE_SGIS" count="1" value="0x8128">
+-        <size name="PointParameterfv"/>
++        <size name="PointParameterfv" mode="get"/>
+     </enum>
+     <enum name="POINT_DISTANCE_ATTENUATION_SGIS" count="3" value="0x8129">
+-        <size name="PointParameterfv"/>
++        <size name="PointParameterfv" mode="get"/>
+     </enum>
+ 
+     <function name="PointParameterfSGIS" alias="PointParameterf">
+diff --git a/src/mapi/glapi/gen/gl_XML.py b/src/mapi/glapi/gen/gl_XML.py
+index 17b9d660266..24f73577c97 100644
+--- a/src/mapi/glapi/gen/gl_XML.py
++++ b/src/mapi/glapi/gen/gl_XML.py
+@@ -555,6 +555,29 @@ class gl_parameter(object):
+         else:
+             return base_size_str
+ 
++    def size_arg_string(self, use_parens = 1):
++        s = self.size()
++        if self.counter or self.count_parameter_list:
++            list = [ "compsize" ]
++
++            if self.counter and self.count_parameter_list:
++                list.append( self.counter )
++            elif self.counter:
++                list = [ self.counter ]
++
++            if s > 1:
++                list.append( str(s) )
++
++            if len(list) > 1 and use_parens :
++                return "safe_mul(%s)" % (string.join(list, " , "))
++            else:
++                return string.join(list, " , ")
++
++        elif self.is_image():
++            return "compsize"
++        else:
++            return str(s)
++
+ 
+     def format_string(self):
+         if self.type_expr.original_string == "GLenum":
+diff --git a/src/mapi/glapi/gen/gl_apitemp.py b/src/mapi/glapi/gen/gl_apitemp.py
+index 8c4514c5824..9417e1868d1 100644
+--- a/src/mapi/glapi/gen/gl_apitemp.py
++++ b/src/mapi/glapi/gen/gl_apitemp.py
+@@ -165,7 +165,7 @@ class PrintGlOffsets(gl_XML.gl_print_base):
+ #endif
+ 
+ #if defined(_WIN32) && defined(_WINDOWS_)
+-#error "Should not include <windows.h> here"
++#pragma message("Should not include <windows.h> here")
+ #endif
+ 
+ """)
+diff --git a/src/mapi/glapi/gen/gl_enums.py b/src/mapi/glapi/gen/gl_enums.py
+index 8879163c161..e2cecce96da 100644
+--- a/src/mapi/glapi/gen/gl_enums.py
++++ b/src/mapi/glapi/gen/gl_enums.py
+@@ -61,7 +61,7 @@ class PrintGlEnums(gl_XML.gl_print_base):
+         return
+ 
+     def print_code(self):
+-        print("""
++        print(r"""
+ typedef int (*cfunc)(const void *, const void *);
+ 
+ /**
+diff --git a/src/mapi/glapi/gen/gl_gentable.py b/src/mapi/glapi/gen/gl_gentable.py
+index aa59d652015..25b99fb2547 100644
+--- a/src/mapi/glapi/gen/gl_gentable.py
++++ b/src/mapi/glapi/gen/gl_gentable.py
+@@ -38,9 +38,7 @@ header = """/* GLXEXT is the define used in the xserver when the GLX extension i
+  * built.  Hijack this to determine whether this file is being built for the
+  * server or the client.
+  */
+-#ifdef HAVE_DIX_CONFIG_H
+ #include <dix-config.h>
+-#endif
+ 
+ #ifndef _WIN32
+ #include <dlfcn.h>
+diff --git a/src/mapi/glapi/gen/gl_table.py b/src/mapi/glapi/gen/gl_table.py
+index 38cae5794ce..790c8c96fd7 100644
+--- a/src/mapi/glapi/gen/gl_table.py
++++ b/src/mapi/glapi/gen/gl_table.py
+@@ -49,14 +49,14 @@ class PrintGlTable(gl_XML.gl_print_base):
+                 f.return_type, f.name, arg_string, f.offset))
+ 
+     def printRealHeader(self):
+-        print('#include "util/glheader.h"')
++        print('#include "glheader.h"')
+         print('')
+         print('#ifdef __cplusplus')
+         print('extern "C" {')
+         print('#endif')
+         print('')
+         print('#if defined(_WIN32) && defined(_WINDOWS_)')
+-        print('#error "Should not include <windows.h> here"')
++        print('#pragma message("Should not include <windows.h> here")')
+         print('#endif')
+         print('')
+         print('struct _glapi_table')
+@@ -85,6 +85,7 @@ class PrintRemapTable(gl_XML.gl_print_base):
+ 
+     def printRealHeader(self):
+         print("""
++#include "glapitable.h"
+ /**
+  * \\file main/dispatch.h
+  * Macros for handling GL dispatch tables.
+@@ -96,12 +97,17 @@ class PrintRemapTable(gl_XML.gl_print_base):
+  * named function in the specified dispatch table.
+  */
+ 
+-#include "util/glheader.h"
++#include "glheader.h"
+ """)
+         return
+ 
+ 
+     def printBody(self, api):
++        print('#ifdef _MSC_VER')
++        print('#ifndef INLINE')
++        print('#define INLINE __inline')
++        print('#endif')
++        print('#endif')
+         print('#define CALL_by_offset(disp, cast, offset, parameters) \\')
+         print('    (*(cast (GET_by_offset(disp, offset)))) parameters')
+         print('#define GET_by_offset(disp, offset) \\')
+diff --git a/src/mapi/glapi/gen/static_data.py b/src/mapi/glapi/gen/static_data.py
+index 60a8a648fb8..5e130e3044f 100644
+--- a/src/mapi/glapi/gen/static_data.py
++++ b/src/mapi/glapi/gen/static_data.py
+@@ -1705,6 +1705,54 @@ offsets = {
+     "FramebufferTextureMultiviewOVR": 1675,
+     "NamedFramebufferTextureMultiviewOVR": 1676,
+     "FramebufferTextureMultisampleMultiviewOVR": 1677,
++    "DestroyPixmap": 1678,
++    "CreateNewContext": 1679,
++    "QueryContext": 1680,
++    "MakeContextCurrent": 1681,
++    "CreatePbuffer": 1682,
++    "DestroyPbuffer": 1683,
++    "GetDrawableAttributes": 1684,
++    "ChangeDrawableAttributes": 1685,
++    "CreateWindow": 1686,
++    "DestroyWindow": 1687,
++    "SwapIntervalSGI": 1688,
++    "MakeCurrentReadSGI": 1689,
++    "QueryContextInfoEXT": 1690,
++    "GetFBConfigsSGIX": 1691,
++    "CreateContextWithConfigSGIX": 1692,
++    "CreateGLXPixmapWithConfigSGIX": 1693,
++    "CreateGLXPbufferSGIX": 1694,
++    "DestroyGLXPbufferSGIX": 1695,
++    "ChangeDrawableAttributesSGIX": 1696,
++    "GetDrawableAttributesSGIX": 1697,
++    "CopySubBufferMESA": 1698,
++    "BindTexImageEXT": 1699,
++    "ReleaseTexImageEXT": 1700,
++    "SetClientInfoARB": 1701,
++    "CreateContextAttribsARB": 1702,
++    "SetClientInfo2ARB": 1703,
++    "GetVisualConfigs": 1704,
++    "Render": 1705,
++    "RenderLarge": 1706,
++    "CreateContext": 1707,
++    "DestroyContext": 1708,
++    "MakeCurrent": 1709,
++    "IsDirect": 1710,
++    "QueryVersion": 1711,
++    "WaitGL": 1712,
++    "WaitX": 1713,
++    "CopyContext": 1714,
++    "SwapBuffers": 1715,
++    "UseXFont": 1716,
++    "CreateGLXPixmap": 1717,
++    "DestroyGLXPixmap": 1718,
++    "VendorPrivate": 1719,
++    "VendorPrivateWithReply": 1720,
++    "QueryExtensionsString": 1721,
++    "QueryServerString": 1722,
++    "ClientInfo": 1723,
++    "GetFBConfigs": 1724,
++    "CreatePixmap": 1725,
+ }
+ 
+ functions = [
+diff --git a/src/mapi/glapi/glapi.h b/src/mapi/glapi/glapi.h
+index 4a0d6a8b44c..e90ec8a52c2 100644
+--- a/src/mapi/glapi/glapi.h
++++ b/src/mapi/glapi/glapi.h
+@@ -70,12 +70,23 @@ extern "C" {
+ #  endif
+ #endif /* _GLAPI_NO_EXPORTS */
+ 
++#include "GL/gl.h"
++#include "GL/glext.h"
+ 
+-typedef void (*_glapi_proc)(void);
++
++struct _glapi_table;
++
++typedef void (*_glapi_proc)(void); /* generic function pointer */
+ 
+ typedef void (*_glapi_nop_handler_proc)(const char *name);
+ 
+-struct _glapi_table;
++typedef void (*_glapi_warning_func)(void *ctx, const char *str, ...);
++
++
++/*
++ * Number of extension functions which we can dynamically add at runtime.
++ */
++#define MAX_EXTENSION_FUNCS 300
+ 
+ #if DETECT_OS_WINDOWS
+ extern __THREAD_INITIAL_EXEC struct _glapi_table * _mesa_glapi_tls_Dispatch;
+@@ -85,9 +96,6 @@ _GLAPI_EXPORT extern __THREAD_INITIAL_EXEC struct _glapi_table * _mesa_glapi_tls
+ _GLAPI_EXPORT extern __THREAD_INITIAL_EXEC void * _mesa_glapi_tls_Context;
+ #endif
+ 
+-_GLAPI_EXPORT extern const struct _glapi_table *_mesa_glapi_Dispatch;
+-_GLAPI_EXPORT extern const void *_glapi_Context;
+-
+ #if DETECT_OS_WINDOWS && !defined(MAPI_MODE_UTIL) && !defined(MAPI_MODE_GLAPI)
+ # define GET_DISPATCH() _mesa_glapi_get_dispatch()
+ # define GET_CURRENT_CONTEXT(C)  struct gl_context *C = (struct gl_context *) _mesa_glapi_get_context()
+@@ -96,40 +104,50 @@ _GLAPI_EXPORT extern const void *_glapi_Context;
+ # define GET_CURRENT_CONTEXT(C)  struct gl_context *C = (struct gl_context *) _mesa_glapi_tls_Context
+ #endif
+ 
+-_GLAPI_EXPORT void
++#ifdef INSERVER
++#define SERVEXTERN _declspec(dllimport)
++#else
++#define SERVEXTERN _declspec(dllexport)
++#endif
++
++SERVEXTERN struct _glapi_table *_mesa_glapi_Dispatch;
++SERVEXTERN void *_glapi_Context;
++SERVEXTERN void
+ _glapi_destroy_multithread(void);
+ 
+ 
+-_GLAPI_EXPORT void
++SERVEXTERN void
+ _glapi_check_multithread(void);
+ 
+ 
+-_GLAPI_EXPORT void
++SERVEXTERN void
+ _mesa_glapi_set_context(void *context);
+ 
+ 
+-_GLAPI_EXPORT void *
++SERVEXTERN void *
+ _mesa_glapi_get_context(void);
+ 
+ 
+-_GLAPI_EXPORT void
++SERVEXTERN void
+ _mesa_glapi_set_dispatch(struct _glapi_table *dispatch);
+ 
+ 
+-_GLAPI_EXPORT struct _glapi_table *
++SERVEXTERN struct _glapi_table *
+ _mesa_glapi_get_dispatch(void);
+ 
++SERVEXTERN int
++_mesa_glapi_begin_dispatch_override(struct _glapi_table *override);
+ 
+-_GLAPI_EXPORT unsigned int
+-_mesa_glapi_get_dispatch_table_size(void);
+-
++struct _glapi_table *
++_measa_glapi_get_override_dispatch(int layer);
+ 
+-_GLAPI_EXPORT int
+-_glapi_add_dispatch( const char * function_name );
++SERVEXTERN unsigned int
++_mesa_glapi_get_dispatch_table_size(void);
+ 
+-_GLAPI_EXPORT int
+-_mesa_glapi_get_proc_offset(const char *funcName);
+ 
++SERVEXTERN int
++_glapi_add_dispatch(const char *const *function_names,
++                    const char *parameter_signature);
+ 
+ _GLAPI_EXPORT _glapi_proc
+ _mesa_glapi_get_proc_address(const char *funcName);
+@@ -138,39 +156,21 @@ _mesa_glapi_get_proc_address(const char *funcName);
+ _GLAPI_EXPORT const char *
+ _glapi_get_proc_name(unsigned int offset);
+ 
+-
+-#if defined(GLX_USE_APPLEGL) || defined(GLX_USE_WINDOWSGL)
+-_GLAPI_EXPORT struct _glapi_table *
++extern struct _glapi_table *
+ _glapi_create_table_from_handle(void *handle, const char *symbol_prefix);
+ 
+ _GLAPI_EXPORT void
+ _glapi_table_patch(struct _glapi_table *, const char *name, void *wrapper);
+-#endif
+ 
+ 
+-_GLAPI_EXPORT void
++void
+ _glapi_set_nop_handler(_glapi_nop_handler_proc func);
+ 
+ /** Return pointer to new dispatch table filled with no-op functions */
+-_GLAPI_EXPORT struct _glapi_table *
++struct _glapi_table *
+ _glapi_new_nop_table(unsigned num_entries);
+ 
+ 
+-/** Deprecated function */
+-_GLAPI_EXPORT unsigned long
+-_glthread_GetID(void);
+-
+-
+-/*
+- * These stubs are kept so that the old DRI drivers still load.
+- */
+-_GLAPI_EXPORT void
+-_glapi_noop_enable_warnings(unsigned char enable);
+-
+-
+-_GLAPI_EXPORT void
+-_glapi_set_warning_func(_glapi_proc func);
+-
+ 
+ #ifdef __cplusplus
+ }
+diff --git a/src/mapi/glapi/glapi_getproc.c b/src/mapi/glapi/glapi_getproc.c
+index 649a6050f01..98e2a9d76f4 100644
+--- a/src/mapi/glapi/glapi_getproc.c
++++ b/src/mapi/glapi/glapi_getproc.c
+@@ -91,6 +91,7 @@ get_static_proc_offset(const char *funcName)
+  * Initializes the glapi relocs table, and returns the offset of the given
+  * function in the dispatch table.
+  */
++#ifndef INSERVER
+ int
+ _glapi_add_dispatch(const char *funcName)
+ {
+@@ -98,11 +99,11 @@ _glapi_add_dispatch(const char *funcName)
+ 
+    return get_static_proc_offset(funcName);
+ }
+-
++#endif
+ /**
+  * Return offset of entrypoint for named function within dispatch table.
+  */
+-GLint
++GLint _GLAPI_EXPORT
+ _mesa_glapi_get_proc_offset(const char *funcName)
+ {
+    /* search static functions */
+@@ -115,7 +116,7 @@ _mesa_glapi_get_proc_offset(const char *funcName)
+  * Return dispatch function address for the named static (built-in) function.
+  * Return NULL if function not found.
+  */
+-_glapi_proc
++_glapi_proc _GLAPI_EXPORT
+ _mesa_glapi_get_proc_address(const char *funcName)
+ {
+    init_glapi_relocs_once();
+@@ -145,7 +146,7 @@ _mesa_glapi_get_proc_address(const char *funcName)
+  * Return the name of the function at the given dispatch offset.
+  * This is only intended for debugging.
+  */
+-const char *
++const char * _GLAPI_EXPORT
+ _glapi_get_proc_name(GLuint offset)
+ {
+    GLuint i;
+@@ -168,7 +169,7 @@ _glapi_get_proc_name(GLuint offset)
+  * Return size of dispatch table struct as number of functions (or
+  * slots).
+  */
+-GLuint
++GLuint _GLAPI_EXPORT
+ _mesa_glapi_get_dispatch_table_size(void)
+ {
+    return sizeof(struct _glapi_table) / sizeof(void *);
+diff --git a/src/mapi/glapi/glapi_nop.c b/src/mapi/glapi/glapi_nop.c
+index 2e130e63ebc..dd9c6f53245 100644
+--- a/src/mapi/glapi/glapi_nop.c
++++ b/src/mapi/glapi/glapi_nop.c
+@@ -46,6 +46,7 @@
+ 
+ #include <stdlib.h>
+ #include <string.h>
++#define _WINDOWS_
+ #include "glapi/glapi_priv.h"
+ 
+ 
+@@ -116,6 +117,7 @@ NoOpUnused(void)
+ #define DISPATCH_TABLE_NAME __glapi_noop_table
+ #define UNUSED_TABLE_NAME __unused_noop_functions
+ 
++#undef _WINDOWS_
+ #include "glapitemp.h"
+ 
+ 
+diff --git a/src/mapi/glapi/registry/gl.xml b/src/mapi/glapi/registry/gl.xml
+index 3683e0f5b3b..64979884e86 100644
+--- a/src/mapi/glapi/registry/gl.xml
++++ b/src/mapi/glapi/registry/gl.xml
+@@ -315,9 +315,12 @@ typedef unsigned int GLhandleARB;
+         <enum value="0xFFFF" name="GL_TRACE_ALL_BITS_MESA" group="TraceMaskMESA"/>
+     </enums>
+ 
+-    <enums namespace="GL" group="PathRenderingMaskNV" type="bitmask">
++    <enums namespace="GL" group="PathFontStyle" type="bitmask">
+         <enum value="0x01" name="GL_BOLD_BIT_NV" group="PathFontStyle"/>
+         <enum value="0x02" name="GL_ITALIC_BIT_NV" group="PathFontStyle"/>
++    </enums>
++
++    <enums namespace="GL" group="PathMetricMask" type="bitmask">
+         <enum value="0x01" name="GL_GLYPH_WIDTH_BIT_NV" group="PathMetricMask"/>
+         <enum value="0x02" name="GL_GLYPH_HEIGHT_BIT_NV" group="PathMetricMask"/>
+         <enum value="0x04" name="GL_GLYPH_HORIZONTAL_BEARING_X_BIT_NV" group="PathMetricMask"/>
+@@ -942,9 +945,9 @@ typedef unsigned int GLhandleARB;
+         <enum value="0x1101" name="GL_FASTEST" group="HintMode"/>
+         <enum value="0x1102" name="GL_NICEST" group="HintMode"/>
+             <unused start="0x1103" end="0x11FF" comment="Unused for HintMode"/>
+-        <enum value="0x1200" name="GL_AMBIENT" group="MaterialParameter,FragmentLightParameterSGIX,ColorMaterialParameter"/>
+-        <enum value="0x1201" name="GL_DIFFUSE" group="MaterialParameter,FragmentLightParameterSGIX,ColorMaterialParameter"/>
+-        <enum value="0x1202" name="GL_SPECULAR" group="MaterialParameter,FragmentLightParameterSGIX,ColorMaterialParameter"/>
++        <enum value="0x1200" name="GL_AMBIENT" group="LightParameter,MaterialParameter,FragmentLightParameterSGIX,ColorMaterialParameter"/>
++        <enum value="0x1201" name="GL_DIFFUSE" group="LightParameter,MaterialParameter,FragmentLightParameterSGIX,ColorMaterialParameter"/>
++        <enum value="0x1202" name="GL_SPECULAR" group="LightParameter,MaterialParameter,FragmentLightParameterSGIX,ColorMaterialParameter"/>
+         <enum value="0x1203" name="GL_POSITION" group="LightParameter,FragmentLightParameterSGIX"/>
+         <enum value="0x1204" name="GL_SPOT_DIRECTION" group="LightParameter,FragmentLightParameterSGIX"/>
+         <enum value="0x1205" name="GL_SPOT_EXPONENT" group="LightParameter,FragmentLightParameterSGIX"/>
+@@ -958,18 +961,18 @@ typedef unsigned int GLhandleARB;
+             <unused start="0x1302" end="0x13FF" comment="Unused for ListMode"/>
+         <enum value="0x1400" name="GL_BYTE" group="VertexAttribIType,WeightPointerTypeARB,TangentPointerTypeEXT,BinormalPointerTypeEXT,ColorPointerType,ListNameType,NormalPointerType,PixelType,VertexAttribType,VertexAttribPointerType"/>
+         <enum value="0x1401" name="GL_UNSIGNED_BYTE" group="VertexAttribIType,ScalarType,ReplacementCodeTypeSUN,ElementPointerTypeATI,MatrixIndexPointerTypeARB,WeightPointerTypeARB,ColorPointerType,DrawElementsType,ListNameType,PixelType,VertexAttribType,VertexAttribPointerType"/>
+-        <enum value="0x1402" name="GL_SHORT" group="VertexAttribIType,SecondaryColorPointerTypeIBM,WeightPointerTypeARB,TangentPointerTypeEXT,BinormalPointerTypeEXT,IndexPointerType,ListNameType,NormalPointerType,PixelType,TexCoordPointerType,VertexPointerType,VertexAttribType,VertexAttribPointerType"/>
++        <enum value="0x1402" name="GL_SHORT" group="VertexAttribIType,SecondaryColorPointerTypeIBM,WeightPointerTypeARB,TangentPointerTypeEXT,BinormalPointerTypeEXT,ColorPointerType,IndexPointerType,ListNameType,NormalPointerType,PixelType,TexCoordPointerType,VertexPointerType,VertexAttribType,VertexAttribPointerType"/>
+         <enum value="0x1403" name="GL_UNSIGNED_SHORT" group="VertexAttribIType,ScalarType,ReplacementCodeTypeSUN,ElementPointerTypeATI,MatrixIndexPointerTypeARB,WeightPointerTypeARB,ColorPointerType,DrawElementsType,ListNameType,PixelFormat,PixelType,VertexAttribType,VertexAttribPointerType"/>
+-        <enum value="0x1404" name="GL_INT" group="VertexAttribIType,SecondaryColorPointerTypeIBM,WeightPointerTypeARB,TangentPointerTypeEXT,BinormalPointerTypeEXT,IndexPointerType,ListNameType,NormalPointerType,PixelType,TexCoordPointerType,VertexPointerType,VertexAttribType,AttributeType,UniformType,VertexAttribPointerType"/>
++        <enum value="0x1404" name="GL_INT" group="VertexAttribIType,SecondaryColorPointerTypeIBM,WeightPointerTypeARB,TangentPointerTypeEXT,BinormalPointerTypeEXT,ColorPointerType,IndexPointerType,ListNameType,NormalPointerType,PixelType,TexCoordPointerType,VertexPointerType,VertexAttribType,AttributeType,UniformType,VertexAttribPointerType"/>
+         <enum value="0x1405" name="GL_UNSIGNED_INT" group="VertexAttribIType,ScalarType,ReplacementCodeTypeSUN,ElementPointerTypeATI,MatrixIndexPointerTypeARB,WeightPointerTypeARB,ColorPointerType,DrawElementsType,ListNameType,PixelFormat,PixelType,VertexAttribType,AttributeType,UniformType,VertexAttribPointerType"/>
+-        <enum value="0x1406" name="GL_FLOAT" group="MapTypeNV,SecondaryColorPointerTypeIBM,WeightPointerTypeARB,VertexWeightPointerTypeEXT,TangentPointerTypeEXT,BinormalPointerTypeEXT,FogCoordinatePointerType,FogPointerTypeEXT,FogPointerTypeIBM,IndexPointerType,ListNameType,NormalPointerType,PixelType,TexCoordPointerType,VertexPointerType,VertexAttribType,AttributeType,UniformType,VertexAttribPointerType"/>
++        <enum value="0x1406" name="GL_FLOAT" group="MapTypeNV,SecondaryColorPointerTypeIBM,WeightPointerTypeARB,VertexWeightPointerTypeEXT,TangentPointerTypeEXT,BinormalPointerTypeEXT,ColorPointerType,FogCoordinatePointerType,FogPointerTypeEXT,FogPointerTypeIBM,IndexPointerType,ListNameType,NormalPointerType,PixelType,TexCoordPointerType,VertexPointerType,VertexAttribType,AttributeType,UniformType,VertexAttribPointerType"/>
+         <enum value="0x1407" name="GL_2_BYTES" group="ListNameType"/>
+         <enum value="0x1407" name="GL_2_BYTES_NV"/>
+         <enum value="0x1408" name="GL_3_BYTES" group="ListNameType"/>
+         <enum value="0x1408" name="GL_3_BYTES_NV"/>
+         <enum value="0x1409" name="GL_4_BYTES" group="ListNameType"/>
+         <enum value="0x1409" name="GL_4_BYTES_NV"/>
+-        <enum value="0x140A" name="GL_DOUBLE" group="VertexAttribLType,MapTypeNV,SecondaryColorPointerTypeIBM,WeightPointerTypeARB,TangentPointerTypeEXT,BinormalPointerTypeEXT,FogCoordinatePointerType,FogPointerTypeEXT,FogPointerTypeIBM,IndexPointerType,NormalPointerType,TexCoordPointerType,VertexPointerType,VertexAttribType,AttributeType,UniformType,VertexAttribPointerType"/>
++        <enum value="0x140A" name="GL_DOUBLE" group="VertexAttribLType,MapTypeNV,SecondaryColorPointerTypeIBM,WeightPointerTypeARB,TangentPointerTypeEXT,BinormalPointerTypeEXT,ColorPointerType,FogCoordinatePointerType,FogPointerTypeEXT,FogPointerTypeIBM,IndexPointerType,NormalPointerType,TexCoordPointerType,VertexPointerType,VertexAttribType,AttributeType,UniformType,VertexAttribPointerType"/>
+         <enum value="0x140A" name="GL_DOUBLE_EXT" group="BinormalPointerTypeEXT,TangentPointerTypeEXT"/>
+         <enum value="0x140B" name="GL_HALF_FLOAT" group="PixelType,VertexAttribPointerType,VertexAttribType"/>
+         <enum value="0x140B" name="GL_HALF_FLOAT_ARB" group="PixelType"/>
+@@ -1094,7 +1097,7 @@ typedef unsigned int GLhandleARB;
+         <enum value="0x2700" name="GL_NEAREST_MIPMAP_NEAREST" group="TextureMinFilter"/>
+         <enum value="0x2701" name="GL_LINEAR_MIPMAP_NEAREST" group="TextureMinFilter"/>
+         <enum value="0x2702" name="GL_NEAREST_MIPMAP_LINEAR" group="TextureMinFilter"/>
+-        <enum value="0x2703" name="GL_LINEAR_MIPMAP_LINEAR" group="TextureWrapMode,TextureMinFilter"/>
++        <enum value="0x2703" name="GL_LINEAR_MIPMAP_LINEAR" group="TextureMinFilter"/>
+             <unused start="0x2704" end="0x27FF" comment="Unused for TextureMinFilter"/>
+         <enum value="0x2800" name="GL_TEXTURE_MAG_FILTER" group="SamplerParameterI,GetTextureParameter,TextureParameterName"/>
+         <enum value="0x2801" name="GL_TEXTURE_MIN_FILTER" group="SamplerParameterI,GetTextureParameter,TextureParameterName"/>
+@@ -1698,10 +1701,10 @@ typedef unsigned int GLhandleARB;
+         <enum value="0x812C" name="GL_MAX_FOG_FUNC_POINTS_SGIS" group="GetPName"/>
+         <enum value="0x812D" name="GL_CLAMP_TO_BORDER" group="TextureWrapMode"/>
+         <enum value="0x812D" name="GL_CLAMP_TO_BORDER_ARB" group="TextureWrapMode"/>
+-        <enum value="0x812D" name="GL_CLAMP_TO_BORDER_EXT"/>
++        <enum value="0x812D" name="GL_CLAMP_TO_BORDER_EXT" group="TextureWrapMode"/>
+         <enum value="0x812D" name="GL_CLAMP_TO_BORDER_NV" group="TextureWrapMode"/>
+         <enum value="0x812D" name="GL_CLAMP_TO_BORDER_SGIS" group="TextureWrapMode"/>
+-        <enum value="0x812D" name="GL_CLAMP_TO_BORDER_OES"/>
++        <enum value="0x812D" name="GL_CLAMP_TO_BORDER_OES" group="TextureWrapMode"/>
+         <enum value="0x812E" name="GL_TEXTURE_MULTI_BUFFER_HINT_SGIX" group="HintTarget"/>
+         <enum value="0x812F" name="GL_CLAMP_TO_EDGE" group="TextureWrapMode"/>
+         <enum value="0x812F" name="GL_CLAMP_TO_EDGE_SGIS" group="TextureWrapMode"/>
+@@ -2448,9 +2451,9 @@ typedef unsigned int GLhandleARB;
+                  this range. Lesson: assigned ranges belong to vendors,
+                  not engineers! -->
+         <enum value="0x8370" name="GL_MIRRORED_REPEAT" group="TextureWrapMode"/>
+-        <enum value="0x8370" name="GL_MIRRORED_REPEAT_ARB"/>
+-        <enum value="0x8370" name="GL_MIRRORED_REPEAT_IBM"/>
+-        <enum value="0x8370" name="GL_MIRRORED_REPEAT_OES"/>
++        <enum value="0x8370" name="GL_MIRRORED_REPEAT_ARB" group="TextureWrapMode"/>
++        <enum value="0x8370" name="GL_MIRRORED_REPEAT_IBM" group="TextureWrapMode"/>
++        <enum value="0x8370" name="GL_MIRRORED_REPEAT_OES" group="TextureWrapMode"/>
+             <unused start="0x8371" end="0x837F" vendor="HP"/>
+     </enums>
+ 
+@@ -2511,9 +2514,9 @@ typedef unsigned int GLhandleARB;
+         <enum value="0x83F6" name="GL_NORMAL_ARRAY_PARALLEL_POINTERS_INTEL"/>
+         <enum value="0x83F7" name="GL_COLOR_ARRAY_PARALLEL_POINTERS_INTEL"/>
+         <enum value="0x83F8" name="GL_TEXTURE_COORD_ARRAY_PARALLEL_POINTERS_INTEL"/>
+-        <enum value="0x83F9" name="GL_PERFQUERY_DONOT_FLUSH_INTEL"/>
+-        <enum value="0x83FA" name="GL_PERFQUERY_FLUSH_INTEL"/>
+-        <enum value="0x83FB" name="GL_PERFQUERY_WAIT_INTEL"/>
++        <enum value="0x83F9" name="GL_PERFQUERY_DONOT_FLUSH_INTEL" group="PerfQueryDataFlags"/>
++        <enum value="0x83FA" name="GL_PERFQUERY_FLUSH_INTEL" group="PerfQueryDataFlags"/>
++        <enum value="0x83FB" name="GL_PERFQUERY_WAIT_INTEL" group="PerfQueryDataFlags"/>
+         <enum value="0x83FC" name="GL_BLACKHOLE_RENDER_INTEL"/>
+             <unused start="0x83FD" vendor="INTEL"/>
+         <enum value="0x83FE" name="GL_CONSERVATIVE_RASTERIZATION_INTEL"/>
+@@ -4811,7 +4814,9 @@ typedef unsigned int GLhandleARB;
+         <enum value="0x8C91" name="GL_MOTION_ESTIMATION_SEARCH_BLOCK_Y_QCOM" group="GetPName"/>
+         <enum value="0x8C92" name="GL_ATC_RGB_AMD"/>
+         <enum value="0x8C93" name="GL_ATC_RGBA_EXPLICIT_ALPHA_AMD"/>
+-            <unused start="0x8C94" end="0x8C9F" vendor="QCOM"/>
++            <unused start="0x8C94" end="0x8C95" vendor="QCOM"/>
++        <enum value="0x8C96" name="GL_TEXTURE_LOD_BIAS_QCOM"/>
++            <unused start="0x8C97" end="0x8C9F" vendor="QCOM"/>
+     </enums>
+     <enums namespace="GL" start="0x8CA0" end="0x8CAF" vendor="ARB">
+         <enum value="0x8CA0" name="GL_POINT_SPRITE_COORD_ORIGIN"/>
+@@ -6923,9 +6928,9 @@ typedef unsigned int GLhandleARB;
+             <unused start="0x9690" end="0x969F" vendor="ANGLE"/>
+     </enums>
+ 
+-    <enums namespace="GL" start="0x96A0" end="0x96AF" vendor="Qualcomm" comment="contact Jeff Leger">
++    <enums namespace="GL" start="0x96A0" end="0x96AF" vendor="QCOM" comment="contact Jeff Leger">
+         <enum value="0x96A0" name="GL_TEXTURE_FOVEATED_CUTOFF_DENSITY_QCOM" group="TextureParameterName"/>
+-            <unused start="0x96A1" end="0x96A1" vendor="Qualcomm"/>
++            <unused start="0x96A1" end="0x96A1" vendor="QCOM"/>
+         <enum value="0x96A2" name="GL_FRAMEBUFFER_FETCH_NONCOHERENT_QCOM" group="GetPName,EnableCap"/>
+         <enum value="0x96A3" name="GL_VALIDATE_SHADER_BINARY_QCOM"/>
+         <enum value="0x96A4" name="GL_SHADING_RATE_QCOM" group="GetPName"/>
+@@ -6948,10 +6953,10 @@ typedef unsigned int GLhandleARB;
+         <enum value="0x96AC" name="GL_SHADING_RATE_4X2_PIXELS_EXT" alias="GL_SHADING_RATE_4X2_PIXELS_QCOM" group="ShadingRate"/>
+         <enum value="0x96AD" name="GL_SHADING_RATE_2X4_PIXELS_EXT" alias="GL_SHADING_RATE_2X4_PIXELS_QCOM" group="ShadingRate"/>
+         <enum value="0x96AE" name="GL_SHADING_RATE_4X4_PIXELS_EXT" alias="GL_SHADING_RATE_4X4_PIXELS_QCOM" group="ShadingRate"/>
+-            <unused start="0x96AF" end="0x96AF" vendor="Qualcomm"/>
++            <unused start="0x96AF" end="0x96AF" vendor="QCOM"/>
+     </enums>
+ 
+-    <enums namespace="GL" start="0x96B0" end="0x96BF" vendor="ANGLE" comment="github pull request">
++    <enums namespace="GL" start="0x96B0" end="0x96BF" vendor="ANGLE" comment="github pull request 311">
+             <unused start="0x96B0" end="0x96BF" vendor="ANGLE"/>
+     </enums>
+ 
+@@ -6993,12 +6998,37 @@ typedef unsigned int GLhandleARB;
+         <enum value="0x96DF" name="GL_FRAGMENT_SHADING_RATE_ATTACHMENT_WITH_DEFAULT_FRAMEBUFFER_SUPPORTED_EXT" group="GetPName"/>
+     </enums>
+ 
+-    <enums namespace="GL" start="0x96E0" end="0x96EF" vendor="ANGLE" comment="Reserved for Ken Russell - ANGLE (via github pull request)">
++    <enums namespace="GL" start="0x96E0" end="0x96EF" vendor="ANGLE" comment="Reserved for Ken Russell - ANGLE (github pull request 493)">
+             <unused start="0x96E0" end="0x96EF" vendor="ANGLE"/>
+     </enums>
+ 
+     <enums namespace="GL" start="0x96F0" end="0x96FF" vendor="ARM" comment="Contact Jan-Harald Fredriksen">
+-            <unused start="0x96F0" end="0x96FF" vendor="ARM"/>
++        <enum value="0x96F0" name="GL_SHADER_CORE_COUNT_ARM" group="GetPName"/>
++        <enum value="0x96F1" name="GL_SHADER_CORE_ACTIVE_COUNT_ARM" group="GetPName"/>
++        <enum value="0x96F2" name="GL_SHADER_CORE_PRESENT_MASK_ARM" group="GetPName"/>
++        <enum value="0x96F3" name="GL_SHADER_CORE_MAX_WARP_COUNT_ARM" group="GetPName"/>
++        <enum value="0x96F4" name="GL_SHADER_CORE_PIXEL_RATE_ARM" group="GetPName"/>
++        <enum value="0x96F5" name="GL_SHADER_CORE_TEXEL_RATE_ARM" group="GetPName"/>
++        <enum value="0x96F6" name="GL_SHADER_CORE_FMA_RATE_ARM" group="GetPName"/>
++            <unused start="0x96F7" end="0x96FF" vendor="ARM"/>
++    </enums>
++
++    <enums namespace="GL" start="0x9700" end="0x970F" vendor="Samsung" comment="Reserved for Jeff Vigil">
++            <unused start="0x9700" end="0x970F" vendor="Samsung"/>
++    </enums>
++
++    <enums namespace="GL" start="0x9710" end="0x971F" vendor="QCOM" comment="Reserved for Ashish Mathur">
++        <enum value="0x9710" name="GL_TEXTURE_Y_DEGAMMA_QCOM" group="TextureParameterName,GetTextureParameter"/>
++        <enum value="0x9711" name="GL_TEXTURE_CBCR_DEGAMMA_QCOM" group="TextureParameterName,GetTextureParameter"/>
++            <unused start="0x9712" end="0x971F" vendor="QCOM"/>
++    </enums>
++
++    <enums namespace="GL" start="0x9720" end="0x973F" vendor="ANGLE" comment="github pull request 626">
++            <unused start="0x9720" end="0x973F" vendor="ANGLE"/>
++    </enums>
++
++    <enums namespace="GL" start="0x9740" end="0x975F" vendor="MESA" comment="Reserved for VK_EXT_mesh_shader (github pull request 640)">
++            <unused start="0x9740" end="0x975F" vendor="MESA"/>
+     </enums>
+ 
+ <!-- Enums reservable for future use. To reserve a new range, allocate one
+@@ -7010,8 +7040,8 @@ typedef unsigned int GLhandleARB;
+      file) File requests in the Khronos Bugzilla, OpenGL project, Registry
+      component. -->
+ 
+-    <enums namespace="GL" start="0x9700" end="99999" vendor="ARB" comment="RESERVED FOR FUTURE ALLOCATIONS BY KHRONOS">
+-        <unused start="0x9700" end="99999" comment="RESERVED"/>
++    <enums namespace="GL" start="0x9760" end="99999" vendor="ARB" comment="RESERVED FOR FUTURE ALLOCATIONS BY KHRONOS">
++        <unused start="0x9760" end="99999" comment="RESERVED"/>
+     </enums>
+ 
+ <!-- Historical large block allocations, all unused except (in older days) by IBM -->
+@@ -7327,7 +7357,7 @@ typedef unsigned int GLhandleARB;
+         </command>
+         <command>
+             <proto>void <name>glBeginPerfQueryINTEL</name></proto>
+-            <param><ptype>GLuint</ptype> <name>queryHandle</name></param>
++            <param class="perf query handle"><ptype>GLuint</ptype> <name>queryHandle</name></param>
+         </command>
+         <command>
+             <proto>void <name>glBeginQuery</name></proto>
+@@ -10318,8 +10348,8 @@ typedef unsigned int GLhandleARB;
+         </command>
+         <command>
+             <proto>void <name>glCreatePerfQueryINTEL</name></proto>
+-            <param><ptype>GLuint</ptype> <name>queryId</name></param>
+-            <param><ptype>GLuint</ptype> *<name>queryHandle</name></param>
++            <param class="perf query id"><ptype>GLuint</ptype> <name>queryId</name></param>
++            <param class="perf query handle"><ptype>GLuint</ptype> *<name>queryHandle</name></param>
+         </command>
+         <command>
+             <proto class="program"><ptype>GLuint</ptype> <name>glCreateProgram</name></proto>
+@@ -10668,7 +10698,7 @@ typedef unsigned int GLhandleARB;
+         </command>
+         <command>
+             <proto>void <name>glDeletePerfQueryINTEL</name></proto>
+-            <param><ptype>GLuint</ptype> <name>queryHandle</name></param>
++            <param class="perf query handle"><ptype>GLuint</ptype> <name>queryHandle</name></param>
+         </command>
+         <command>
+             <proto>void <name>glDeleteProgram</name></proto>
+@@ -11739,7 +11769,7 @@ typedef unsigned int GLhandleARB;
+         </command>
+         <command>
+             <proto>void <name>glEndPerfQueryINTEL</name></proto>
+-            <param><ptype>GLuint</ptype> <name>queryHandle</name></param>
++            <param class="perf query handle"><ptype>GLuint</ptype> <name>queryHandle</name></param>
+         </command>
+         <command>
+             <proto>void <name>glEndQuery</name></proto>
+@@ -13494,7 +13524,7 @@ typedef unsigned int GLhandleARB;
+         </command>
+         <command>
+             <proto>void <name>glGetFirstPerfQueryIdINTEL</name></proto>
+-            <param><ptype>GLuint</ptype> *<name>queryId</name></param>
++            <param class="perf query id"><ptype>GLuint</ptype> *<name>queryId</name></param>
+         </command>
+         <command>
+             <proto>void <name>glGetFixedv</name></proto>
+@@ -14340,8 +14370,8 @@ typedef unsigned int GLhandleARB;
+         </command>
+         <command>
+             <proto>void <name>glGetNextPerfQueryIdINTEL</name></proto>
+-            <param><ptype>GLuint</ptype> <name>queryId</name></param>
+-            <param><ptype>GLuint</ptype> *<name>nextQueryId</name></param>
++            <param class="perf query id"><ptype>GLuint</ptype> <name>queryId</name></param>
++            <param class="perf query id"><ptype>GLuint</ptype> *<name>nextQueryId</name></param>
+         </command>
+         <command>
+             <proto>void <name>glGetObjectBufferfvATI</name></proto>
+@@ -14376,7 +14406,7 @@ typedef unsigned int GLhandleARB;
+             <param><ptype>GLenum</ptype> <name>identifier</name></param>
+             <param><ptype>GLuint</ptype> <name>name</name></param>
+             <param><ptype>GLsizei</ptype> <name>bufSize</name></param>
+-            <param><ptype>GLsizei</ptype> *<name>length</name></param>
++            <param len="1"><ptype>GLsizei</ptype> *<name>length</name></param>
+             <param len="bufSize"><ptype>GLchar</ptype> *<name>label</name></param>
+             <alias name="glGetObjectLabel"/>
+         </command>
+@@ -14515,7 +14545,7 @@ typedef unsigned int GLhandleARB;
+         </command>
+         <command>
+             <proto>void <name>glGetPerfCounterInfoINTEL</name></proto>
+-            <param><ptype>GLuint</ptype> <name>queryId</name></param>
++            <param class="perf query id"><ptype>GLuint</ptype> <name>queryId</name></param>
+             <param><ptype>GLuint</ptype> <name>counterId</name></param>
+             <param><ptype>GLuint</ptype> <name>counterNameLength</name></param>
+             <param len="counterNameLength"><ptype>GLchar</ptype> *<name>counterName</name></param>
+@@ -14573,8 +14603,8 @@ typedef unsigned int GLhandleARB;
+         </command>
+         <command>
+             <proto>void <name>glGetPerfQueryDataINTEL</name></proto>
+-            <param><ptype>GLuint</ptype> <name>queryHandle</name></param>
+-            <param><ptype>GLuint</ptype> <name>flags</name></param>
++            <param class="perf query handle"><ptype>GLuint</ptype> <name>queryHandle</name></param>
++            <param group="PerfQueryDataFlags"><ptype>GLuint</ptype> <name>flags</name></param>
+             <param><ptype>GLsizei</ptype> <name>dataSize</name></param>
+             <param>void *<name>data</name></param>
+             <param><ptype>GLuint</ptype> *<name>bytesWritten</name></param>
+@@ -14582,11 +14612,11 @@ typedef unsigned int GLhandleARB;
+         <command>
+             <proto>void <name>glGetPerfQueryIdByNameINTEL</name></proto>
+             <param><ptype>GLchar</ptype> *<name>queryName</name></param>
+-            <param><ptype>GLuint</ptype> *<name>queryId</name></param>
++            <param class="perf query id"><ptype>GLuint</ptype> *<name>queryId</name></param>
+         </command>
+         <command>
+             <proto>void <name>glGetPerfQueryInfoINTEL</name></proto>
+-            <param><ptype>GLuint</ptype> <name>queryId</name></param>
++            <param class="perf query id"><ptype>GLuint</ptype> <name>queryId</name></param>
+             <param><ptype>GLuint</ptype> <name>queryNameLength</name></param>
+             <param len="queryNameLength"><ptype>GLchar</ptype> *<name>queryName</name></param>
+             <param><ptype>GLuint</ptype> *<name>dataSize</name></param>
+@@ -17812,6 +17842,10 @@ typedef unsigned int GLhandleARB;
+             <param><ptype>GLfloat</ptype> <name>y</name></param>
+             <param><ptype>GLfloat</ptype> <name>z</name></param>
+         </command>
++        <command>
++            <proto>void <name>glMaxActiveShaderCoresARM</name></proto>
++            <param><ptype>GLuint</ptype> <name>count</name></param>
++        </command>
+         <command>
+             <proto>void <name>glMaxShaderCompilerThreadsKHR</name></proto>
+             <param><ptype>GLuint</ptype> <name>count</name></param>
+@@ -19351,6 +19385,15 @@ typedef unsigned int GLhandleARB;
+             <param kind="CheckedInt32"><ptype>GLint</ptype> <name>level</name></param>
+             <param kind="CheckedInt32"><ptype>GLint</ptype> <name>layer</name></param>
+         </command>
++        <command>
++            <proto>void <name>glNamedFramebufferTextureMultiviewOVR</name></proto>
++            <param class="framebuffer"><ptype>GLuint</ptype> <name>framebuffer</name></param>
++            <param group="FramebufferAttachment"><ptype>GLenum</ptype> <name>attachment</name></param>
++            <param class="texture"><ptype>GLuint</ptype> <name>texture</name></param>
++            <param kind="CheckedInt32"><ptype>GLint</ptype> <name>level</name></param>
++            <param><ptype>GLint</ptype> <name>baseViewIndex</name></param>
++            <param><ptype>GLsizei</ptype> <name>numViews</name></param>
++        </command>
+         <command>
+             <proto>void <name>glNamedProgramLocalParameter4dEXT</name></proto>
+             <param class="program"><ptype>GLuint</ptype> <name>program</name></param>
+@@ -28195,7 +28238,7 @@ typedef unsigned int GLhandleARB;
+             <param><ptype>GLint</ptype> <name>size</name></param>
+             <param group="VertexAttribIType"><ptype>GLenum</ptype> <name>type</name></param>
+             <param><ptype>GLsizei</ptype> <name>stride</name></param>
+-            <param len="COMPSIZE(size,type,stride)">const void *<name>pointer</name></param>
++            <param>const void *<name>pointer</name></param>
+         </command>
+         <command>
+             <proto>void <name>glVertexAttribIPointerEXT</name></proto>
+@@ -28203,7 +28246,7 @@ typedef unsigned int GLhandleARB;
+             <param><ptype>GLint</ptype> <name>size</name></param>
+             <param group="VertexAttribIType"><ptype>GLenum</ptype> <name>type</name></param>
+             <param><ptype>GLsizei</ptype> <name>stride</name></param>
+-            <param len="COMPSIZE(size,type,stride)">const void *<name>pointer</name></param>
++            <param>const void *<name>pointer</name></param>
+             <alias name="glVertexAttribIPointer"/>
+         </command>
+         <command>
+@@ -28428,7 +28471,7 @@ typedef unsigned int GLhandleARB;
+             <param><ptype>GLint</ptype> <name>size</name></param>
+             <param group="VertexAttribLType"><ptype>GLenum</ptype> <name>type</name></param>
+             <param><ptype>GLsizei</ptype> <name>stride</name></param>
+-            <param len="size">const void *<name>pointer</name></param>
++            <param>const void *<name>pointer</name></param>
+         </command>
+         <command>
+             <proto>void <name>glVertexAttribLPointerEXT</name></proto>
+@@ -28436,7 +28479,7 @@ typedef unsigned int GLhandleARB;
+             <param><ptype>GLint</ptype> <name>size</name></param>
+             <param group="VertexAttribLType"><ptype>GLenum</ptype> <name>type</name></param>
+             <param><ptype>GLsizei</ptype> <name>stride</name></param>
+-            <param len="size">const void *<name>pointer</name></param>
++            <param>const void *<name>pointer</name></param>
+             <alias name="glVertexAttribLPointer"/>
+         </command>
+         <command>
+@@ -28508,7 +28551,7 @@ typedef unsigned int GLhandleARB;
+             <param group="VertexAttribPointerType"><ptype>GLenum</ptype> <name>type</name></param>
+             <param><ptype>GLboolean</ptype> <name>normalized</name></param>
+             <param><ptype>GLsizei</ptype> <name>stride</name></param>
+-            <param len="COMPSIZE(size,type,stride)">const void *<name>pointer</name></param>
++            <param>const void *<name>pointer</name></param>
+         </command>
+         <command>
+             <proto>void <name>glVertexAttribPointerARB</name></proto>
+@@ -28517,7 +28560,7 @@ typedef unsigned int GLhandleARB;
+             <param group="VertexAttribPointerType"><ptype>GLenum</ptype> <name>type</name></param>
+             <param><ptype>GLboolean</ptype> <name>normalized</name></param>
+             <param><ptype>GLsizei</ptype> <name>stride</name></param>
+-            <param len="COMPSIZE(size,type,stride)">const void *<name>pointer</name></param>
++            <param>const void *<name>pointer</name></param>
+             <alias name="glVertexAttribPointer"/>
+         </command>
+         <command>
+@@ -39620,6 +39663,18 @@ typedef unsigned int GLhandleARB;
+             </require>
+         </extension>
+         <extension name="GL_ARM_rgba8" supported="gles1|gles2"/>
++        <extension name="GL_ARM_shader_core_properties" supported="gles2">
++            <require>
++                <enum name="GL_SHADER_CORE_COUNT_ARM"/>
++                <enum name="GL_SHADER_CORE_ACTIVE_COUNT_ARM"/>
++                <enum name="GL_SHADER_CORE_PRESENT_MASK_ARM"/>
++                <enum name="GL_SHADER_CORE_MAX_WARP_COUNT_ARM"/>
++                <enum name="GL_SHADER_CORE_PIXEL_RATE_ARM"/>
++                <enum name="GL_SHADER_CORE_TEXEL_RATE_ARM"/>
++                <enum name="GL_SHADER_CORE_FMA_RATE_ARM"/>
++                <command name="glMaxActiveShaderCoresARM"/>
++            </require>
++        </extension>
+         <extension name="GL_ARM_shader_framebuffer_fetch" supported="gles2">
+             <require>
+                 <enum name="GL_FETCH_PER_SAMPLE_ARM"/>
+@@ -42328,6 +42383,7 @@ typedef unsigned int GLhandleARB;
+                 <enum name="GL_SKIP_DECODE_EXT"/>
+             </require>
+         </extension>
++        <extension name="GL_EXT_texture_shadow_lod" supported="gl|glcore|gles2"/>
+         <extension name="GL_EXT_texture_shared_exponent" supported="gl">
+             <require>
+                 <enum name="GL_RGB9_E5_EXT"/>
+@@ -43414,6 +43470,21 @@ typedef unsigned int GLhandleARB;
+                 <command name="glResizeBuffersMESA"/>
+             </require>
+         </extension>
++        <extension name="GL_MESA_sampler_objects" supported="gles2">
++            <require comment="Reuse (the GLES3 part of) ARB_sampler_objects">
++                <enum name="GL_SAMPLER_BINDING"/>
++                <command name="glGenSamplers"/>
++                <command name="glDeleteSamplers"/>
++                <command name="glIsSampler"/>
++                <command name="glBindSampler"/>
++                <command name="glSamplerParameteri"/>
++                <command name="glSamplerParameteriv"/>
++                <command name="glSamplerParameterf"/>
++                <command name="glSamplerParameterfv"/>
++                <command name="glGetSamplerParameteriv"/>
++                <command name="glGetSamplerParameterfv"/>
++            </require>
++        </extension>
+         <extension name="GL_MESA_shader_integer_functions" supported="gl|gles2"/>
+         <extension name="GL_MESA_tile_raster_order" supported="gl">
+             <require>
+@@ -45031,7 +45102,7 @@ typedef unsigned int GLhandleARB;
+                 <enum name="GL_REFLECTION_MAP_NV"/>
+             </require>
+         </extension>
+-        <extension name="GL_NV_texture_barrier" supported="gl|glcore">
++        <extension name="GL_NV_texture_barrier" supported="gl|glcore|gles2">
+             <require>
+                 <command name="glTextureBarrierNV"/>
+             </require>
+@@ -45249,6 +45320,7 @@ typedef unsigned int GLhandleARB;
+                 <command name="glDrawTransformFeedbackNV"/>
+             </require>
+         </extension>
++        <extension name="GL_NV_uniform_buffer_std430_layout" supported="gl|glcore"/>
+         <extension name="GL_NV_uniform_buffer_unified_memory" supported="gl|glcore">
+             <require>
+                 <enum name="GL_UNIFORM_BUFFER_UNIFIED_NV"/>
+@@ -46530,6 +46602,9 @@ typedef unsigned int GLhandleARB;
+                 <enum name="GL_FRAMEBUFFER_INCOMPLETE_VIEW_TARGETS_OVR"/>
+                 <command name="glFramebufferTextureMultiviewOVR"/>
+             </require>
++            <require comment="Supported only if ARB_direct_state_access or OpenGL 4.5 is supported">
++                <command name="glNamedFramebufferTextureMultiviewOVR"/>
++            </require>
+         </extension>
+         <extension name="GL_OVR_multiview2" supported="gl|glcore|gles2"/>
+         <extension name="GL_OVR_multiview_multisampled_render_to_texture" supported="gles2">
+@@ -46665,8 +46740,8 @@ typedef unsigned int GLhandleARB;
+                 <command name="glExtrapolateTex2DQCOM"/>
+             </require>
+         </extension>
+-        <extension name="GL_QCOM_render_shared_exponent" supported="gles2">
+-        </extension>
++        <extension name="GL_QCOM_render_shared_exponent" supported="gles2"/>
++        <extension name="GL_QCOM_render_sRGB_R8_RG8" supported="gles2"/>
+         <extension name="GL_QCOM_texture_foveated" supported="gles2">
+             <require>
+                 <enum name="GL_FOVEATION_ENABLE_BIT_QCOM"/>
+@@ -46690,6 +46765,17 @@ typedef unsigned int GLhandleARB;
+                 <enum name="GL_MAX_SHADER_SUBSAMPLED_IMAGE_UNITS_QCOM"/>
+             </require>
+         </extension>
++        <extension name="GL_QCOM_ycbcr_degamma" supported="gles2">
++            <require>
++                <enum name="GL_TEXTURE_Y_DEGAMMA_QCOM"/>
++                <enum name="GL_TEXTURE_CBCR_DEGAMMA_QCOM"/>
++            </require>
++        </extension>
++        <extension name="GL_QCOM_texture_lod_bias" supported="gles2">
++            <require>
++                <enum name="GL_TEXTURE_LOD_BIAS_QCOM"/>
++            </require>
++        </extension>
+         <extension name="GL_QCOM_perfmon_global_mode" supported="gles1|gles2">
+             <require>
+                 <enum name="GL_PERFMON_GLOBAL_MODE_QCOM"/>
+@@ -46701,8 +46787,7 @@ typedef unsigned int GLhandleARB;
+                 <command name="glFramebufferFetchBarrierQCOM"/>
+             </require>
+         </extension>
+-        <extension name="GL_QCOM_shader_framebuffer_fetch_rate" supported="gles2">
+-        </extension>
++        <extension name="GL_QCOM_shader_framebuffer_fetch_rate" supported="gles2"/>
+         <extension name="GL_QCOM_shading_rate" supported="gles2">
+             <require>
+                 <enum name="GL_SHADING_RATE_QCOM"/>
+@@ -46759,8 +46844,7 @@ typedef unsigned int GLhandleARB;
+                 <enum name="GL_WRITEONLY_RENDERING_QCOM"/>
+             </require>
+         </extension>
+-        <extension name="GL_QCOM_YUV_texture_gather" supported="gles2">
+-        </extension>
++        <extension name="GL_QCOM_YUV_texture_gather" supported="gles2"/>
+         <extension name="GL_REND_screen_coordinates" supported="gl">
+             <require>
+                 <enum name="GL_SCREEN_COORDINATES_REND"/>
+@@ -47435,6 +47519,5 @@ typedef unsigned int GLhandleARB;
+                 <enum name="GL_FOG_SPECULAR_TEXTURE_WIN"/>
+             </require>
+         </extension>
+-        <extension name="GL_EXT_texture_shadow_lod" supported="gl|glcore|gles2"/>
+     </extensions>
+ </registry>
+diff --git a/src/mapi/mapi_abi.py b/src/mapi/mapi_abi.py
+index 5d0ffe95408..bb10937b10e 100644
+--- a/src/mapi/mapi_abi.py
++++ b/src/mapi/mapi_abi.py
+@@ -44,7 +44,7 @@ class ABIEntry(object):
+     """Represent an ABI entry."""
+ 
+     _match_c_param = re.compile(
+-            '^(?P<type>[\w\s*]+?)(?P<name>\w+)(\[(?P<array>\d+)\])?$')
++            r'^(?P<type>[\w\s*]+?)(?P<name>\w+)(\[(?P<array>\d+)\])?$')
+ 
+     def __init__(self, cols, attrs, xml_data = None):
+         self._parse(cols)
+@@ -480,7 +480,7 @@ class ABIPrinter(object):
+         print(self.c_public_includes())
+         print()
+         print('#if defined(_WIN32) && defined(_WINDOWS_)')
+-        print('#error "Should not include <windows.h> here"')
++        print('#pragma message("Should not include <windows.h> here")')
+         print('#endif')
+         print()
+         print(self.c_public_declarations(self.prefix_lib))
+diff --git a/src/mesa/main/api_arrayelt.c b/src/mesa/main/api_arrayelt.c
+index 805e13d0ecb..509b5fa8a35 100644
+--- a/src/mesa/main/api_arrayelt.c
++++ b/src/mesa/main/api_arrayelt.c
+@@ -1487,7 +1487,7 @@ _mesa_ArrayElement(GLint elt)
+     * then we call PrimitiveRestartNV and return.
+     */
+    if (ctx->Array.PrimitiveRestart && (elt == ctx->Array.RestartIndex)) {
+-      CALL_PrimitiveRestartNV(ctx->Dispatch.Current, ());
++      CALL_PrimitiveRestartNV(ctx->Dispatch.Current);
+       return;
+    }
+ 
+diff --git a/src/mesa/main/config.h b/src/mesa/main/config.h
+index 74c41fd1d95..e23d8909892 100644
+--- a/src/mesa/main/config.h
++++ b/src/mesa/main/config.h
+@@ -33,6 +33,8 @@
+ 
+ #include "compiler/shader_enums.h"
+ 
++#define PACKAGE_BUGREPORT "https://bugs.freedesktop.org/enter_bug.cgi?product=Mesa"
++
+ /**
+  * \name OpenGL implementation limits
+  */
+diff --git a/src/mesa/main/context.c b/src/mesa/main/context.c
+index 636eb5235b9..fcef413e182 100644
+--- a/src/mesa/main/context.c
++++ b/src/mesa/main/context.c
+@@ -160,6 +160,12 @@ int MESA_VERBOSE = 0;
+ int MESA_DEBUG_FLAGS = 0;
+ #endif
+ 
++#ifndef HAVE_OPENGL
++#define HAVE_OPENGL 0
++#define HAVE_OPENGL_ES_2 0
++#define HAVE_OPENGL_ES_1 0
++#endif
++
+ 
+ /* ubyte -> float conversion */
+ GLfloat _mesa_ubyte_to_float_color_tab[256];
+diff --git a/src/mesa/main/draw.c b/src/mesa/main/draw.c
+index 485ae07ecb0..97f1c7d7f7f 100644
+--- a/src/mesa/main/draw.c
++++ b/src/mesa/main/draw.c
+@@ -2381,7 +2381,7 @@ _mesa_DrawElementsIndirect(GLenum mode, GLenum type, const GLvoid *indirect)
+             (DrawElementsIndirectCommand *) indirect;
+ 
+          /* Convert offset to pointer */
+-         void *offset = (void *)
++         void *offset = (void *)(uintptr_t)
+             (uintptr_t)((cmd->firstIndex * _mesa_sizeof_type(type)) & 0xffffffffUL);
+ 
+          _mesa_DrawElementsInstancedBaseVertexBaseInstance(mode, cmd->count,
+diff --git a/src/mesa/main/glformats.h b/src/mesa/main/glformats.h
+index 391898d64e7..6355db6b855 100644
+--- a/src/mesa/main/glformats.h
++++ b/src/mesa/main/glformats.h
+@@ -28,6 +28,7 @@
+ #define GLFORMATS_H
+ 
+ 
++#include <stdint.h>
+ #include <stdbool.h>
+ #include <stdint.h>
+ 
+diff --git a/src/mesa/main/image.h b/src/mesa/main/image.h
+index 7dd2e45691b..ecbd35d49ad 100644
+--- a/src/mesa/main/image.h
++++ b/src/mesa/main/image.h
+@@ -26,6 +26,7 @@
+ #ifndef IMAGE_H
+ #define IMAGE_H
+ 
++#include <stdint.h>
+ 
+ #include "util/glheader.h"
+ 
+diff --git a/src/mesa/main/macros.h b/src/mesa/main/macros.h
+index 16268d4dd7c..30335171e6f 100644
+--- a/src/mesa/main/macros.h
++++ b/src/mesa/main/macros.h
+@@ -158,21 +158,21 @@ extern GLfloat _mesa_ubyte_to_float_color_tab[256];
+            else if (__tmp.i >= IEEE_ONE)				\
+               UB = (GLubyte) 255;					\
+            else {							\
+-              __tmp.f = __tmp.f * (255.0F/256.0F) + 32768.0F;		\
++              __tmp.f = __tmp.f * (255.0f/256.0f) + 32768.0f;		\
+               UB = (GLubyte) __tmp.i;					\
+            }								\
+         } while (0)
+ #define CLAMPED_FLOAT_TO_UBYTE(UB, FLT)					\
+         do {								\
+            fi_type __tmp;						\
+-           __tmp.f = (FLT) * (255.0F/256.0F) + 32768.0F;		\
++           __tmp.f = (FLT) * (255.0f/256.0f) + 32768.0f;		\
+            UB = (GLubyte) __tmp.i;					\
+         } while (0)
+ #else
+-#define UNCLAMPED_FLOAT_TO_UBYTE(ub, f) \
+-	ub = ((GLubyte) _mesa_lroundevenf(CLAMP((f), 0.0F, 1.0F) * 255.0F))
+-#define CLAMPED_FLOAT_TO_UBYTE(ub, f) \
+-	ub = ((GLubyte) _mesa_lroundevenf((f) * 255.0F))
++#define UNCLAMPED_FLOAT_TO_UBYTE(ub, FLT) \
++	ub = ((GLubyte) _mesa_lroundevenf(CLAMP((FLT), 0.0f, 1.0f) * 255.0f))
++#define CLAMPED_FLOAT_TO_UBYTE(ub, FLT) \
++	ub = ((GLubyte) _mesa_lroundevenf((FLT) * 255.0f))
+ #endif
+ 
+ static fi_type UINT_AS_UNION(GLuint u)
+diff --git a/src/mesa/math/m_matrix.h b/src/mesa/math/m_matrix.h
+index da87c211d87..a26aa43c17d 100644
+--- a/src/mesa/math/m_matrix.h
++++ b/src/mesa/math/m_matrix.h
+@@ -57,9 +57,15 @@ enum GLmatrixtype {
+ /**
+  * Matrix type to represent 4x4 transformation matrices.
+  */
+-typedef struct {
+-   alignas(16) GLfloat m[16];   /**< 16 matrix elements (16-byte aligned) */
+-   alignas(16) GLfloat inv[16]; /**< 16-element inverse (16-byte aligned) */
++typedef struct
++#ifdef _MSC_VER
++ __declspec(align(16))
++#else
++ __attribute__((aligned(16)))
++#endif
++{
++   GLfloat m[16];   /**< 16 matrix elements (16-byte aligned) */
++   GLfloat inv[16]; /**< 16-element inverse (16-byte aligned) */
+    GLuint flags;                /**< possible values determined by (of \link
+                                  * MatFlags MAT_FLAG_* flags\endlink)
+                                  */
+diff --git a/src/mesa/program/program_parse.y b/src/mesa/program/program_parse.y
+index ea5a4af551a..899ba92aab5 100644
+--- a/src/mesa/program/program_parse.y
++++ b/src/mesa/program/program_parse.y
+@@ -128,11 +128,11 @@ static struct asm_instruction *asm_instruction_copy_ctor(
+    } while(0)
+ %}
+ 
+-%pure-parser
++%define api.pure
+ %locations
+ %lex-param   { struct asm_parser_state *state }
+ %parse-param { struct asm_parser_state *state }
+-%error-verbose
++%define parse.error verbose
+ 
+ %union {
+    struct asm_instruction *inst;
+diff --git a/src/microsoft/compiler/nir_to_dxil.c b/src/microsoft/compiler/nir_to_dxil.c
+index 9b14b9d74b3..2a37e59505a 100644
+--- a/src/microsoft/compiler/nir_to_dxil.c
++++ b/src/microsoft/compiler/nir_to_dxil.c
+@@ -5425,6 +5425,29 @@ emit_texture_lod(struct ntd_context *ctx, struct texop_parameters *params, bool
+    return dxil_emit_call(&ctx->mod, func, args, ARRAY_SIZE(args));
+ }
+ 
++static const struct dxil_value *
++emit_texture_gather(struct ntd_context *ctx, struct texop_parameters *params, unsigned component)
++{
++   const struct dxil_func *func = dxil_get_function(&ctx->mod, "dx.op.textureGather", params->overload);
++   if (!func)
++      return false;
++
++   const struct dxil_value *args[] = {
++      dxil_module_get_int32_const(&ctx->mod, DXIL_INTR_TEXTURE_GATHER),
++      params->tex,
++      params->sampler,
++      params->coord[0],
++      params->coord[1],
++      params->coord[2],
++      params->coord[3],
++      params->offset[0],
++      params->offset[1],
++      dxil_module_get_int32_const(&ctx->mod, component)
++   };
++
++   return dxil_emit_call(&ctx->mod, func, args, ARRAY_SIZE(args));
++}
++
+ static const struct dxil_value *
+ emit_texture_gather(struct ntd_context *ctx, struct texop_parameters *params, unsigned component)
+ {
