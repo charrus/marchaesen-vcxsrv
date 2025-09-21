@@ -2946,22 +2946,8 @@ index 2bfc0bf4469..a575daf4439 100644
  
      def format_string(self):
          if self.type_expr.original_string == "GLenum":
-diff --git a/src/mapi/glapi/gen/gl_gentable.py b/src/mapi/glapi/gen/gl_gentable.py
-index 2780c83046b..a58e219f56a 100644
---- a/src/mapi/glapi/gen/gl_gentable.py
-+++ b/src/mapi/glapi/gen/gl_gentable.py
-@@ -38,9 +38,7 @@ header = """/* GLXEXT is the define used in the xserver when the GLX extension i
-  * built.  Hijack this to determine whether this file is being built for the
-  * server or the client.
-  */
--#ifdef HAVE_DIX_CONFIG_H
- #include <dix-config.h>
--#endif
- 
- #ifndef _WIN32
- #include <dlfcn.h>
 diff --git a/src/mapi/glapi/gen/gl_table.py b/src/mapi/glapi/gen/gl_table.py
-index 4af4a498863..b4d1b4a7b54 100644
+index 4af4a498863..4690e3b073e 100644
 --- a/src/mapi/glapi/gen/gl_table.py
 +++ b/src/mapi/glapi/gen/gl_table.py
 @@ -50,14 +50,14 @@ class PrintGlTable(gl_XML.gl_print_base):
@@ -2981,15 +2967,7 @@ index 4af4a498863..b4d1b4a7b54 100644
          print('#endif')
          print('')
          print('struct _glapi_table')
-@@ -86,6 +86,7 @@ class PrintRemapTable(gl_XML.gl_print_base):
- 
-     def printRealHeader(self):
-         print("""
-+#include "glapitable.h"
- /**
-  * \\file main/dispatch.h
-  * Macros for handling GL dispatch tables.
-@@ -97,12 +98,17 @@ class PrintRemapTable(gl_XML.gl_print_base):
+@@ -97,27 +97,38 @@ class PrintRemapTable(gl_XML.gl_print_base):
   * named function in the specified dispatch table.
   */
  
@@ -3008,6 +2986,30 @@ index 4af4a498863..b4d1b4a7b54 100644
          print('#define CALL_by_offset(disp, cast, offset, parameters) \\')
          print('    (*(cast (GET_by_offset(disp, offset)))) parameters')
          print('#define GET_by_offset(disp, offset) \\')
+         print('    (offset >= 0) ? (((_glapi_proc *)(disp))[offset]) : NULL')
+         print('#define SET_by_offset(disp, offset, fn) \\')
+         print('    do { \\')
+-        print('        assert(offset >= 0 && offset < _gloffset_COUNT); \\')
+-        print('        ( (_glapi_proc *) (disp) )[offset] = (_glapi_proc) fn; \\')
++        print('        if ( (offset) < 0 ) { \\')
++        print('            /* fprintf( stderr, "[%s:%u] SET_by_offset(%p, %d, %s)!\\n", */ \\')
++        print('            /*         __func__, __LINE__, disp, offset, # fn); */ \\')
++        print('            /* abort(); */ \\')
++        print('        } \\')
++        print('        else { \\')
++        print('            ( (_glapi_proc *) (disp) )[offset] = (_glapi_proc) fn; \\')
++        print('        } \\')
+         print('    } while(0)')
+         print('')
+ 
+         abi_functions = [f for f in api.functionIterateByOffset()]
+ 
+         print('/* total number of offsets below */')
+-        print('#define _gloffset_COUNT %d' % (static_data.function_count))
++        print('#define _gloffset_COUNT %d' % (len(abi_functions)))
+         print('')
+ 
+         for f in abi_functions:
 diff --git a/src/mapi/glapi/gen/static_data.py b/src/mapi/glapi/gen/static_data.py
 index ab06bddd509..a668d75caea 100644
 --- a/src/mapi/glapi/gen/static_data.py
